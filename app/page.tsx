@@ -17,12 +17,12 @@ const COLS=[
  "% BLO LETTER / TOTAL DISCREPANCY NOTICES"
 ];
 
-function values(r:OfficerReportRow,i:number){
+function rowValues(r:OfficerReportRow,rowIndex:number){
  return [
-  i+1,formatOfficer(r),r.totalNotices,r.nmTotal,r.nmEarlier,r.nmLatest,r.nmDifference,
+  rowIndex+1,formatOfficer(r),r.totalNotices,r.nmTotal,r.nmEarlier,r.nmLatest,r.nmDifference,
   r.nmPct+"%",r.nmDocs,r.nmDocsPct+"%","",r.dTotal,r.dEarlier,r.dLatest,
   r.dDifference,r.dPct+"%",r.dLetters,r.dLettersPct+"%"
- ][i];
+ ];
 }
 
 const color=(kind:string):[number,number,number]=>kind==="low"?[248,180,180]:kind==="medium"?[255,230,153]:[183,225,161];
@@ -100,7 +100,7 @@ export default function Page(){
    "% OF DISCREPANCY\nNOTICES\nDISPOSED","BLO LETTER\nUPLOADED","% BLO LETTER /\nTOTAL DISCREPANCY\nNOTICES"
   ].map((content,i)=>({content,styles:{fillColor:(i<7?navy:brown) as [number,number,number],textColor:255}}));
 
-  const body=rows.map(r=>COLS.map((_,i)=>values(r,i)));
+  const body=rows.map((r,rowIndex)=>rowValues(r,rowIndex));
   body.push([
    "","GRAND TOTAL",total.totalNotices,total.nmTotal,total.nmEarlier,total.nmLatest,total.nmDifference,
    total.nmPct+"%",total.nmDocs,total.nmDocsPct+"%","",total.dTotal,total.dEarlier,total.dLatest,
@@ -198,7 +198,7 @@ export default function Page(){
       if(j===10)return <td key={j} className="sep"/>;
       const k=j===6?groups.nm.get(r.officer):j===9?groups.docs.get(r.officer):j===14?groups.disc.get(r.officer):j===17?groups.letters.get(r.officer):"";
       const cls=[j===4||j===12?"earlier":"",k?"colour "+k:"",j===1?"name":""].join(" ");
-      return <td key={j} className={cls}>{j===1?formatOfficer(r):values(r,i)[j]}</td>;
+      return <td key={j} className={cls}>{rowValues(r,i)[j]}</td>;
      })}
     </tr>)}
     <tr className="grand"><td></td><td>GRAND TOTAL</td><td>{formatNumber(total.totalNotices)}</td><td>{formatNumber(total.nmTotal)}</td><td>{formatNumber(total.nmEarlier)}</td><td>{formatNumber(total.nmLatest)}</td><td>{formatNumber(total.nmDifference)}</td><td>{total.nmPct}%</td><td>{formatNumber(total.nmDocs)}</td><td>{total.nmDocsPct}%</td><td className="sep"></td><td>{formatNumber(total.dTotal)}</td><td>{formatNumber(total.dEarlier)}</td><td>{formatNumber(total.dLatest)}</td><td>{formatNumber(total.dDifference)}</td><td>{total.dPct}%</td><td>{formatNumber(total.dLetters)}</td><td>{total.dLettersPct}%</td></tr>
