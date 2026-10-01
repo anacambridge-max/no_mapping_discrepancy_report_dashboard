@@ -221,8 +221,8 @@ export default function Page(){
    const pWidths=[7,10,35,34,15,14,13,17,17,14,13,18,22];
    autoTable(doc,{
     startY:37,head:[pHead],body:pRows,theme:"grid",tableWidth:247,margin:{left:10,right:40,bottom:12},
-    styles:{font:"helvetica",fontSize:7.8,cellPadding:1.25,lineColor:grid,lineWidth:.25,halign:"center",valign:"middle",overflow:"linebreak",textColor:[20,28,38] as [number,number,number]},
-    headStyles:{font:"helvetica",fontStyle:"bold",fontSize:6.6,fillColor:navy,textColor:255,cellPadding:2.0,minCellHeight:12},
+    styles:{font:"helvetica",fontSize:7.0,cellPadding:.75,lineColor:grid,lineWidth:.25,halign:"center",valign:"middle",overflow:"linebreak",textColor:[20,28,38] as [number,number,number]},
+    headStyles:{font:"helvetica",fontStyle:"bold",fontSize:6.4,fillColor:navy,textColor:255,cellPadding:1.5,minCellHeight:10},
     columnStyles:Object.fromEntries(pWidths.map((w,i)=>[i,{cellWidth:w,halign:[2,3].includes(i)?"left":"center"}])),
     didParseCell:(data:any)=>{
      if(data.section!=="body")return;
@@ -318,4 +318,59 @@ export default function Page(){
    *{box-sizing:border-box}body{margin:0;background:#f3f5f8;color:#172033;font-family:Arial,Helvetica,sans-serif}.bar{height:8px;background:#1f3864}header{background:#1f3864;color:#fff;text-align:center;padding:13px 10px 11px}header h1{font-size:25px;margin:0 0 4px;font-weight:800}header div{font-size:12px}header small{display:block;font-size:9px;margin-top:4px}.uploads{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px 22px}.upload{background:#fff;border:1px solid #b8c0cc;padding:11px}.uploadtitle b{display:block;color:#1f3864;font-size:12px}.uploadtitle span{display:block;color:#667085;font-size:10px;margin-top:2px}.drop{height:43px;border:1px dashed #8d9aad;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:6px;position:relative;font-size:11px}.drop input{position:absolute;inset:0;opacity:0;cursor:pointer}.manual{margin-top:7px;padding:6px;border:1px solid #d0d5dd;font-size:10px;width:210px}.ok{margin-top:6px;color:#20733a;font-size:10px;display:flex;align-items:center;gap:5px}.ok strong{background:#d9ead3;padding:2px 5px}.error{margin:0 22px 10px;padding:9px;background:#fde2e2;color:#8f2d2d;border:1px solid #e5a4a4;font-weight:700;display:flex;gap:6px}.panel{margin:0 22px 24px;background:#fff;border:1px solid #b8c0cc}.actions{padding:9px 10px;border-bottom:1px solid #b8c0cc;display:flex;justify-content:space-between;align-items:center}.actions b{display:block;color:#1f3864;font-size:14px}.actions span{display:block;color:#667085;font-size:10px;margin-top:2px}.buttons{display:flex;gap:7px}.buttons button{display:flex;align-items:center;gap:5px;border:1px solid #1f3864;background:#fff;color:#1f3864;padding:7px 10px;font-weight:800;font-size:11px}.buttons .pdf{background:#1f3864;color:#fff}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:1700px}th,td{border:1px solid #b8c0cc;padding:6px 5px;text-align:center;font-size:12px;line-height:1.08}th{background:#1f3864;color:#fff;font-size:9px;font-weight:800;white-space:normal;cursor:pointer}th svg{vertical-align:middle;margin-left:2px}.groups th{font-size:10px;cursor:default;padding:5px}.groups th:last-child{background:#833c0b}.groups th:nth-child(2){background:#1f3864}.groups .sep{background:#fff}.name{text-align:left;font-weight:700;white-space:normal;min-width:180px}tbody tr:nth-child(even){background:#f2f5fa}.earlier{background:#fff8e1}.colour{font-weight:800}.low{background:#f8b4b4}.medium{background:#ffe699}.high{background:#b7e1a1}.colour.low{background:#f8b4b4}.colour.medium{background:#ffe699}.colour.high{background:#b7e1a1}.sep{width:7px;min-width:7px;padding:0!important;background:#fff!important;border-left:0!important;border-right:0!important}.grand td{background:#d9e1f2!important;font-weight:800}.legend{padding:7px 10px 2px;display:flex;align-items:center;gap:8px;font-size:10px}.legend span{padding:3px 10px;font-weight:800;border:1px solid #b8c0cc}.legend .low{background:#f8b4b4}.legend .medium{background:#ffe699}.legend .high{background:#b7e1a1}.legendnote,.notes{font-size:9px;color:#475467;padding:3px 10px}.notes{padding-bottom:9px}.empty{margin:20px 22px;padding:40px;background:#fff;border:1px solid #b8c0cc;display:flex;flex-direction:column;align-items:center;gap:8px;color:#667085}.empty b{color:#1f3864}@media(max-width:900px){.uploads{grid-template-columns:1fr}.actions{align-items:flex-start;gap:10px;flex-direction:column}}@media print{.uploads,.actions{display:none!important}.panel{margin:0}body{background:#fff}}
   `}</style>
  </main>;
-}
+}   const top:any[]=[
+    {content:"S.No.",rowSpan:2},
+    {content:"OFFICER (AERO / Ad.AERO)",rowSpan:2},
+    {content:"DESIG.",rowSpan:2},
+    {content:"NO. OF PS",rowSpan:2},
+    {content:"TOTAL\nNOTICES",rowSpan:2},
+    {content:"NO MAPPING\nNOTICES",rowSpan:2},
+    {content:"NM DISP.\nEARLIER",rowSpan:2},
+    {content:"NM DISP.\nLATEST",rowSpan:2},
+    {content:"DIFF.",rowSpan:2},
+    {content:"% NM\nDISPOSED",rowSpan:2},
+    {content:"NM DOCS\nUPLOADED",rowSpan:2},
+    {content:"DISCREPANCY\nNOTICES",rowSpan:2},
+    {content:"DISC. DISP.\nEARLIER",rowSpan:2},
+    {content:"DISC. DISP.\nLATEST",rowSpan:2},
+    {content:"DIFF.",rowSpan:2},
+    {content:"% DISC.\nDISPOSED",rowSpan:2},
+    {content:"BLO LETTER\nUPLOADED",rowSpan:2}
+   ];
+   const body=rows.map((r,rowIndex)=>[
+    rowIndex+1,formatOfficer(r),r.designation||"",r.psCount,r.totalNotices,r.nmTotal,r.nmEarlier||0,r.nmLatest,r.nmDifference,
+    r.nmPct+"%",r.nmDocs,r.dTotal,r.dEarlier||0,r.dLatest,r.dDifference,r.dPct+"%",r.dLetters
+   ]);
+   body.push([
+    "","GRAND TOTAL","",psCount,total.totalNotices,total.nmTotal,total.nmEarlier,total.nmLatest,total.nmDifference,
+    total.nmPct+"%",total.nmDocs,total.dTotal,total.dEarlier,total.dLatest,total.dDifference,total.dPct+"%",total.dLetters
+   ]);
+   const widths=[7,39,12,11,15,15,14,14,10,14,15,16,14,14,10,14,16];
+   autoTable(doc,{
+    startY:34,head:[top],body,theme:"grid",tableWidth:277,margin:{left:10,right:10,bottom:18},
+    styles:{font:"helvetica",fontSize:8.2,cellPadding:1.35,lineColor:grid,lineWidth:.25,textColor:[20,28,38] as [number,number,number],halign:"center",valign:"middle",overflow:"linebreak"},
+    headStyles:{font:"helvetica",fontStyle:"bold",fontSize:7.0,halign:"center",valign:"middle",cellPadding:2.2,minCellHeight:14,fillColor:navy,textColor:255},
+    columnStyles:Object.fromEntries(widths.map((w,i)=>[i,{cellWidth:w,halign:i===1?"left":"center"}])),
+    didParseCell:(data:any)=>{
+     if(data.section==="body"){
+      const r=rows[data.row.index];
+      if(data.row.index===rows.length){
+       data.cell.styles.fillColor=[217,225,242];data.cell.styles.fontStyle="bold";
+      }else if(r){
+       if(data.column.index===5||data.column.index===11)data.cell.styles.fillColor=yellow;
+       if(data.column.index===7)data.cell.styles.fillColor=color(groups.nm.get(r.officer)||"medium");
+       if(data.column.index===10)data.cell.styles.fillColor=color(groups.docs.get(r.officer)||"medium");
+       if(data.column.index===13)data.cell.styles.fillColor=color(groups.disc.get(r.officer)||"medium");
+       if(data.column.index===16)data.cell.styles.fillColor=color(groups.letters.get(r.officer)||"medium");
+       if([6,7,9,10,12,13,15,16].includes(data.column.index))data.cell.styles.fontStyle="bold";
+      }
+     }
+    },
+    didDrawPage:(data:any)=>{
+     doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(80,88,98);
+     doc.text("Officer Wise Progress Report - No Mapping & Discrepancy Notices",10,202);
+     doc.text(`Page ${data.pageNumber}`,287,202,{align:"right"});
+    }
+   });
+
+
