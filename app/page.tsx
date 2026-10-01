@@ -57,6 +57,10 @@ export default function Page(){
 
  const reports=useMemo(()=>buildOfficerRows(latest?.rows||[],earlier?.rows||[]),[latest,earlier]);
  const rows=useMemo(()=>[...reports].sort((a:any,b:any)=>{
+  const isAnuja=(r:any)=>/anuja\\s+trivedi/i.test(String(r.officer||""));
+  const ap=isAnuja(a),bp=isAnuja(b);
+  if(ap&&!bp)return -1;
+  if(!ap&&bp)return 1;
   if(sortKey==="officer"||sortKey==="designation") return String(a[sortKey]).localeCompare(String(b[sortKey]))*sortDir;
   return ((Number(a[sortKey])||0)-(Number(b[sortKey])||0))*sortDir;
  }),[reports,sortKey,sortDir]);
