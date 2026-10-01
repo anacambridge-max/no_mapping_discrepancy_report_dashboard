@@ -187,7 +187,7 @@ export default function Page(){
     r.disc,r.discDisp,percentage(r.discDisp,r.disc)+"%",r.letters,r.pending
    ]);
    pRows.push([
-    "",`TOTAL - ${officerRow.officer}, ${officerRow.designation||"Officer"} (${psData.length} PS)`,
+    "TOTAL","","",
     "", "",officerRow.nmTotal,officerRow.nmLatest,officerRow.nmPct+"%",officerRow.nmDocs,
     officerRow.dTotal,officerRow.dLatest,officerRow.dPct+"%",officerRow.dLetters,
     officerRow.totalNotices-officerRow.totalDisposed
