@@ -10,12 +10,14 @@ export type OfficerReportRow = {
   nmDifference: number;
   nmPct: number;
   nmDocs: number;
+  nmDocsPct: number;
   dTotal: number;
   dEarlier: number;
   dLatest: number;
   dDifference: number;
   dPct: number;
   dLetters: number;
+  dLettersPct: number;
   psCount: number;
 };
 
@@ -126,7 +128,7 @@ export function buildReports(latest:any[],earlier:any[]){
   const officerRows:OfficerReportRow[]=officerNames.map(officer=>{
     const l=latest.filter(r=>r.officer===officer); const e=earlier.filter(r=>r.officer===officer);
     const L=totals(l),E=totals(e);
-    return {officer,designation:l[0]?.designation||e[0]?.designation||"",totalNotices:L.nmTotal+L.dTotal,nmTotal:L.nmTotal,nmEarlier:E.nmDisposed,nmLatest:L.nmDisposed,nmDifference:L.nmDisposed-E.nmDisposed,nmPct:percentage(L.nmDisposed,L.nmTotal),nmDocs:L.nmDocs,dTotal:L.dTotal,dEarlier:E.dDisposed,dLatest:L.dDisposed,dDifference:L.dDisposed-E.dDisposed,dPct:percentage(L.dDisposed,L.dTotal),dLetters:L.dLetter,psCount:l.length};
+    return {officer,designation:l[0]?.designation||e[0]?.designation||"",totalNotices:L.nmTotal+L.dTotal,nmTotal:L.nmTotal,nmEarlier:E.nmDisposed,nmLatest:L.nmDisposed,nmDifference:L.nmDisposed-E.nmDisposed,nmPct:percentage(L.nmDisposed,L.nmTotal),nmDocs:L.nmDocs,nmDocsPct:percentage(L.nmDocs,L.nmTotal),dTotal:L.dTotal,dEarlier:E.dDisposed,dLatest:L.dDisposed,dDifference:L.dDisposed-E.dDisposed,dPct:percentage(L.dDisposed,L.dTotal),dLetters:L.dLetter,dLettersPct:percentage(L.dLetter,L.dTotal),psCount:l.length};
   }).sort((a,b)=>b.nmDifference-a.nmDifference||a.officer.localeCompare(b.officer));
 
   const psNos=[...new Set([...latest.map(r=>r.psNo),...earlier.map(r=>r.psNo)])];
@@ -140,8 +142,8 @@ export function buildReports(latest:any[],earlier:any[]){
 }
 
 export function grandOfficer(rows:OfficerReportRow[]){
-  const x=rows.reduce((a,r)=>{a.totalNotices+=r.totalNotices;a.nmTotal+=r.nmTotal;a.nmEarlier+=r.nmEarlier;a.nmLatest+=r.nmLatest;a.nmDifference+=r.nmDifference;a.nmDocs+=r.nmDocs;a.dTotal+=r.dTotal;a.dEarlier+=r.dEarlier;a.dLatest+=r.dLatest;a.dDifference+=r.dDifference;a.dLetters+=r.dLetters;a.psCount+=r.psCount;return a;},{totalNotices:0,nmTotal:0,nmEarlier:0,nmLatest:0,nmDifference:0,nmDocs:0,dTotal:0,dEarlier:0,dLatest:0,dDifference:0,dLetters:0,psCount:0});
-  return {...x,nmPct:percentage(x.nmLatest,x.nmTotal),dPct:percentage(x.dLatest,x.dTotal)};
+  const x=rows.reduce((a,r)=>{a.totalNotices+=r.totalNotices;a.nmTotal+=r.nmTotal;a.nmEarlier+=r.nmEarlier;a.nmLatest+=r.nmLatest;a.nmDifference+=r.nmDifference;a.nmDocs+=r.nmDocs;a.nmDocsPct+=0;a.dTotal+=r.dTotal;a.dEarlier+=r.dEarlier;a.dLatest+=r.dLatest;a.dDifference+=r.dDifference;a.dLetters+=r.dLetters;a.dLettersPct+=0;a.psCount+=r.psCount;return a;},{totalNotices:0,nmTotal:0,nmEarlier:0,nmLatest:0,nmDifference:0,nmDocs:0,dTotal:0,dEarlier:0,dLatest:0,dDifference:0,dLetters:0,dLettersPct:0,psCount:0});
+  return {...x,nmPct:percentage(x.nmLatest,x.nmTotal),nmDocsPct:percentage(x.nmDocs,x.nmTotal),dPct:percentage(x.dLatest,x.dTotal),dLettersPct:percentage(x.dLetters,x.dTotal)};
 }
 
 export function grandPS(rows:PSReportRow[]){ return grandOfficer(rows); }
