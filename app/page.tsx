@@ -150,28 +150,58 @@ export default function Page(){
   };
   let detailY=18;
   const psHead=["S.No.","PS No.","BLO NAME","BLO SUPERVISOR","TOTAL NOTICES","TOTAL NO MAPPING","NM DISP. EARLIER","NM DISP. LATEST","NM DIFF.","NM DOCS UPLOADED","TOTAL DISCREPANCY","DISC. DISP. EARLIER","DISC. DISP. LATEST","DISC. DIFF.","BLO LETTER UPLOADED","TOTAL NOTICES DISPOSED","% TOTAL DISPOSED"];
-  const psWidths=[6,9,27,27,15,16,16,16,13,18,17,16,16,13,18,19,17];
-  rows.forEach((officerRow,oi)=>{
-    const psRows=buildOfficerPSRows(officerRow.officer);
-    // Each officer starts a distinct section. If a long table continues, the officer heading repeats.
+  // Full A3 width: the PS-wise table uses the same visual scale and colour language as the Officer-wise table.
+  const psWidths=[8,13,37,37,21,22,22,22,18,25,23,22,22,18,25,26,24];
+  const psGroup=[
+    {content:"",colSpan:5,rowSpan:1},
+    {content:"NO MAPPING NOTICES",colSpan:5},
+    {content:"DISCREPANCY NOTICES",colSpan:5},
+    {content:"TOTAL DISPOSAL",colSpan:2}
+  ];
+  const allPS=rows.flatMap(r=>buildOfficerPSRows(r.officer));
+  const psBand=(value:number,values:number[])=>{
+    if(!values.length)return "medium";
+    const sorted=[...values].sort((a,b)=>a-b);
+    const p=Math.max(0,Math.min(1,(sorted.findIndex(v=>v>=value)+0.5)/sorted.length));
+    return p<=1/3?"low":p>=2/3?"high":"medium";
+  };
+  rows.forEach((officerRow,oi)=>{    // Each officer starts a distinct section. If a long table continues, the officer heading repeats.
     if(oi>0) doc.addPage();
     const officerTitle=(oi+1)+". "+officerRow.officer+" ("+(officerRow.designation||"Officer")+") — "+officerRow.psCount+" PS";
     detailPageHeader(officerTitle);
     detailY=18;
     autoTable(doc,{
-      theme:"grid",startY:detailY,head:[psHead],body:psRows,
+      theme:"grid",startY:detailY,head:[psGroup,psHead],body:psRows,
       tableWidth:385,margin:{left:17.5,right:17.5,top:18,bottom:12},
       showHead:"everyPage",pageBreak:"auto",rowPageBreak:"avoid",
-      styles:{font:"helvetica",fontStyle:"bold" as const,fontSize:7.2,cellPadding:.8,lineColor:grid,lineWidth:.25,textColor:[20,28,38] as [number,number,number],halign:"center" as const,valign:"middle" as const,overflow:"linebreak" as const},
-      headStyles:{font:"helvetica",fontStyle:"bold" as const,fontSize:6.4,cellPadding:.8,minCellHeight:9,fillColor:navy,textColor:255,halign:"center" as const,valign:"middle" as const},
+      styles:{font:"helvetica",fontStyle:"bold" as const,fontSize:8.5,cellPadding:1.0,lineColor:grid,lineWidth:.25,textColor:[20,28,38] as [number,number,number],halign:"center" as const,valign:"middle" as const,overflow:"linebreak" as const},
+      headStyles:{font:"helvetica",fontStyle:"bold" as const,fontSize:7.4,cellPadding:1.0,minCellHeight:10.5,fillColor:navy,textColor:255,halign:"center" as const,valign:"middle" as const},
       columnStyles:Object.fromEntries(psWidths.map((w,i)=>[i,{cellWidth:w,halign:i===2||i===3?"left":"center"}])),
       willDrawPage:()=>{
         detailPageHeader(officerTitle);
       },
       didParseCell:(data:any)=>{
+        if(data.section==="head"){
+          data.cell.styles.fillColor=(data.row.index===0&&data.column.index>=5&&data.column.index<=9)||(data.row.index===1&&data.column.index>=5&&data.column.index<=9)?navy:
+            (data.row.index===0&&data.column.index>=10&&data.column.index<=14)||(data.row.index===1&&data.column.index>=10&&data.column.index<=14)?brown:navy;
+          return;
+        }
         if(data.section!=="body")return;
+        const p=psRows[data.row.index] as any[]|undefined;
+        if(!p)return;
         if(data.column.index===5||data.column.index===10)data.cell.styles.fillColor=yellow;
-        if(data.column.index===8||data.column.index===13)data.cell.styles.fillColor=[255,248,225];
+        if(data.column.index===8){
+          const vals=allPS.map(x=>Number(x[8])||0);
+          const c=color(psBand(Number(p[8])||0,vals));data.cell.styles.fillColor=c;
+        }
+        if(data.column.index===13){
+          const vals=allPS.map(x=>Number(x[13])||0);
+          const c=color(psBand(Number(p[13])||0,vals));data.cell.styles.fillColor=c;
+        }
+        if(data.column.index===16){
+          const vals=allPS.map(x=>parseFloat(String(x[16]))||0);
+          const c=color(psBand(parseFloat(String(p[16]))||0,vals));data.cell.styles.fillColor=c;
+        }
       }
     });
     detailY=((doc as any).lastAutoTable?.finalY||detailY+10)+7;
