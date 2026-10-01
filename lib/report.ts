@@ -104,7 +104,9 @@ export function parseGrandTotal(rows:RawRow[]){
   return rows.find(r=>String(key(r,aliases.ps)).trim().toUpperCase()==="GRAND TOTAL")||null;
 }
 
-type MetricTotals = { nmTotal:number; nmPending:number; nmDisposed:number; nmDocs:number; dTotal:number; dPending:number; dDisposed:number; dLetter:number; };\n\nfunction totals(rows:any[]):MetricTotals{
+type MetricTotals = { nmTotal:number; nmPending:number; nmDisposed:number; nmDocs:number; dTotal:number; dPending:number; dDisposed:number; dLetter:number; };
+
+function totals(rows:any[]):MetricTotals{
   return rows.reduce((a,r)=>{
     a.nmTotal+=r.nmTotal;a.nmPending+=r.nmPending;a.nmDisposed+=r.nmDisposed;a.nmDocs+=r.nmDocs;
     a.dTotal+=r.dTotal;a.dPending+=r.dPending;a.dDisposed+=r.dDisposed;a.dLetter+=r.dLetter;return a;
