@@ -108,7 +108,7 @@ function totals(rows:any[]){
   return rows.reduce((a,r)=>{
     a.nmTotal+=r.nmTotal;a.nmPending+=r.nmPending;a.nmDisposed+=r.nmDisposed;a.nmDocs+=r.nmDocs;
     a.dTotal+=r.dTotal;a.dPending+=r.dPending;a.dDisposed+=r.dDisposed;a.dLetter+=r.dLetter;return a;
-  },{nmTotal:0,nmPending:0,nmDisposed:0,nmDocs:0,dTotal:0,dPending:0,dDisposed:0,dLetter:0});
+  },{nmTotal:0,nmPending:0,nmDisposed:0,nmDocs:0,nmDocsPct:0,dTotal:0,dPending:0,dDisposed:0,dLetter:0});
 }
 
 export function validateGrandTotal(rows:any[],source:RawRow|null){
