@@ -141,25 +141,33 @@ export default function Page(){
     if(data.column.index===21)data.cell.styles.fillColor=color(groups.totalDisposed.get(r.officer)||"medium");
   }});
   // PS-wise detail section: all concerned PS are listed officer-by-officer in the same report.
+  // IMPORTANT: Officer-wise summary table above is intentionally untouched.
   doc.addPage();
-  doc.setFillColor(...navy);doc.rect(0,0,420,12,"F");
-  doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(11);
-  doc.text("OFFICER-WISE PS-WISE DETAILED REPORT",210,8,{align:"center"});
-  let detailY=17;
+  const detailPageHeader=(title:string)=>{
+    doc.setFillColor(...navy);doc.rect(0,0,420,13,"F");
+    doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(9.5);
+    doc.text(title,210,8.2,{align:"center"});
+  };
+  let detailY=18;
   const psHead=["S.No.","PS No.","BLO NAME","BLO SUPERVISOR","TOTAL NOTICES","TOTAL NO MAPPING","NM DISP. EARLIER","NM DISP. LATEST","NM DIFF.","NM DOCS UPLOADED","TOTAL DISCREPANCY","DISC. DISP. EARLIER","DISC. DISP. LATEST","DISC. DIFF.","BLO LETTER UPLOADED","TOTAL NOTICES DISPOSED","% TOTAL DISPOSED"];
   const psWidths=[6,9,27,27,15,16,16,16,13,18,17,16,16,13,18,19,17];
   rows.forEach((officerRow,oi)=>{
     const psRows=buildOfficerPSRows(officerRow.officer);
-    if(detailY>260){doc.addPage();detailY=16;}
-    doc.setFillColor(...navy);doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(8.5);
-    doc.text((oi+1)+". "+officerRow.officer+" ("+(officerRow.designation||"Officer")+") — "+officerRow.psCount+" PS",17.5,detailY+5);
-    detailY+=8;
+    // Each officer starts a distinct section. If a long table continues, the officer heading repeats.
+    if(oi>0) doc.addPage();
+    const officerTitle=(oi+1)+". "+officerRow.officer+" ("+(officerRow.designation||"Officer")+") — "+officerRow.psCount+" PS";
+    detailPageHeader(officerTitle);
+    detailY=18;
     autoTable(doc,{
       theme:"grid",startY:detailY,head:[psHead],body:psRows,
-      tableWidth:385,margin:{left:17.5,right:17.5,top:14,bottom:12},
+      tableWidth:385,margin:{left:17.5,right:17.5,top:18,bottom:12},
+      showHead:"everyPage",pageBreak:"auto",rowPageBreak:"avoid",
       styles:{font:"helvetica",fontStyle:"bold" as const,fontSize:7.2,cellPadding:.8,lineColor:grid,lineWidth:.25,textColor:[20,28,38] as [number,number,number],halign:"center" as const,valign:"middle" as const,overflow:"linebreak" as const},
       headStyles:{font:"helvetica",fontStyle:"bold" as const,fontSize:6.4,cellPadding:.8,minCellHeight:9,fillColor:navy,textColor:255,halign:"center" as const,valign:"middle" as const},
       columnStyles:Object.fromEntries(psWidths.map((w,i)=>[i,{cellWidth:w,halign:i===2||i===3?"left":"center"}])),
+      willDrawPage:()=>{
+        detailPageHeader(officerTitle);
+      },
       didParseCell:(data:any)=>{
         if(data.section!=="body")return;
         if(data.column.index===5||data.column.index===10)data.cell.styles.fillColor=yellow;
@@ -169,12 +177,19 @@ export default function Page(){
     detailY=((doc as any).lastAutoTable?.finalY||detailY+10)+7;
   });
   const fy=((doc as any).lastAutoTable?.finalY||120)+10;
-  const legendY=fy>270?(doc.addPage(),16):fy;
-  doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(40,48,58);doc.text("COLOUR CODE:",10,legendY);doc.setFontSize(7);doc.setTextColor(40,48,58);doc.text("COLOUR CODE:",10,fy);
+  const pageHeight=doc.internal.pageSize.getHeight();
+  if(fy>pageHeight-24) { doc.addPage(); }
+  const legendY=(doc.internal.pages.length-1)>1 && fy>pageHeight-24?18:fy;
+  doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(40,48,58);doc.text("COLOUR CODE:",10,legendY);
   let x=35;[["LOW","low"],["MEDIUM","medium"],["HIGH","high"]].forEach(([label,k])=>{const c=color(k);doc.setFillColor(c[0],c[1],c[2]);doc.rect(x,legendY-3.5,23,4,"F");doc.setTextColor(40,48,58);doc.text(label,x+25,legendY);x+=50;});
   doc.setFont("helvetica","normal");doc.setFontSize(6.5);doc.text("Colour coding applies to Difference and percentage columns. Lowest third = red; highest third = green.",185,legendY);
   doc.text("Pending NM = Total No Mapping Notices - Latest NM Disposed | Pending Disc. = Total Discrepancy Notices - Latest Disposed | Total Pending = Pending NM + Pending Disc.",10,legendY+7);
-  doc.setFontSize(6);doc.text("AC-34 MATIALA | SIR-2026 | OFFICER-WISE NOTICE DISPOSAL REPORT | Data as of "+latest.timestamp,10,292);doc.text("Page 1",410,292,{align:"right"});
+  const pageCount=doc.internal.pages.length-1;
+  for(let pno=2;pno<=pageCount;pno++){
+    doc.setPage(pno);doc.setFont("helvetica","normal");doc.setFontSize(6);doc.setTextColor(40,48,58);
+    doc.text("AC-34 MATIALA | SIR-2026 | OFFICER-WISE NOTICE DISPOSAL REPORT | Data as of "+latest.timestamp,10,pageHeight-5);
+    doc.text("Page "+pno+" of "+pageCount,410,pageHeight-5,{align:"right"});
+  }
   doc.save("Officer_Wise_Report_"+new Date().toISOString().slice(0,10)+".pdf");
  };
 
