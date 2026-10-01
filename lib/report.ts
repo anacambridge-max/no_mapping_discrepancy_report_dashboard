@@ -12,6 +12,7 @@ export type OfficerReportRow = {
   nmDocs:number; nmDocsPct:number;
   dTotal:number; dEarlier:number; dLatest:number; dDifference:number; dPct:number;
   dLetters:number; dLettersPct:number; psCount:number;
+  totalDisposed:number; totalDisposedPct:number;
 };
 
 export type ParsedReport = {
@@ -151,19 +152,21 @@ export function buildOfficerRows(latest:NormalizedRow[],earlier:NormalizedRow[])
       nmPct:percentage(L.nmDisposed,L.nmTotal),nmDocs:L.nmDocs,nmDocsPct:percentage(L.nmDocs,L.nmTotal),
       dTotal:L.dTotal,dEarlier:E.dDisposed,dLatest:L.dDisposed,dDifference:L.dDisposed-E.dDisposed,
       dPct:percentage(L.dDisposed,L.dTotal),dLetters:L.dLetter,dLettersPct:percentage(L.dLetter,L.dTotal),
-      psCount:latest.filter(r=>r.officer===officer).length
+      psCount:latest.filter(r=>r.officer===officer).length,
+      totalDisposed:L.nmDisposed+L.dDisposed,
+      totalDisposedPct:percentage(L.nmDisposed+L.dDisposed,L.nmTotal+L.dTotal)
     };
   }).sort((a,b)=>b.nmDifference-a.nmDifference||a.officer.localeCompare(b.officer));
 }
 
 export function grandOfficer(rows:OfficerReportRow[]){
-  const out={totalNotices:0,nmTotal:0,nmEarlier:0,nmLatest:0,nmDifference:0,nmDocs:0,dTotal:0,dEarlier:0,dLatest:0,dDifference:0,dLetters:0,psCount:0};
+  const out={totalNotices:0,nmTotal:0,nmEarlier:0,nmLatest:0,nmDifference:0,nmDocs:0,dTotal:0,dEarlier:0,dLatest:0,dDifference:0,dLetters:0,psCount:0,totalDisposed:0};
   for(const r of rows){
     out.totalNotices+=r.totalNotices; out.nmTotal+=r.nmTotal; out.nmEarlier+=r.nmEarlier; out.nmLatest+=r.nmLatest;
     out.nmDifference+=r.nmDifference; out.nmDocs+=r.nmDocs; out.dTotal+=r.dTotal; out.dEarlier+=r.dEarlier;
-    out.dLatest+=r.dLatest; out.dDifference+=r.dDifference; out.dLetters+=r.dLetters; out.psCount+=r.psCount;
+    out.dLatest+=r.dLatest; out.dDifference+=r.dDifference; out.dLetters+=r.dLetters; out.psCount+=r.psCount; out.totalDisposed+=r.totalDisposed;
   }
-  return {...out,nmPct:percentage(out.nmLatest,out.nmTotal),nmDocsPct:percentage(out.nmDocs,out.nmTotal),dPct:percentage(out.dLatest,out.dTotal),dLettersPct:percentage(out.dLetters,out.dTotal)};
+  return {...out,nmPct:percentage(out.nmLatest,out.nmTotal),nmDocsPct:percentage(out.nmDocs,out.nmTotal),dPct:percentage(out.dLatest,out.dTotal),dLettersPct:percentage(out.dLetters,out.dTotal),totalDisposedPct:percentage(out.totalDisposed,out.totalNotices)};
 }
 
 export function percentileGroups(rows:OfficerReportRow[],value:(r:OfficerReportRow)=>number){
