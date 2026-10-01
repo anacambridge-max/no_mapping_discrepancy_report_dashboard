@@ -195,9 +195,9 @@ export default function Page(){
    doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(7);
    doc.text("OFFICE OF THE ELECTORAL REGISTRATION OFFICER, AC-34, MATIALA",148.5,7,{align:"center"});
    doc.setTextColor(40,48,58);doc.setFont("helvetica","bold");doc.setFontSize(10);
-   doc.text(`${officerIndex+1}. ${officerRow.officer} ${officerRow.designation||"Officer"} - ${psData.length} PS | Total Notices: ${fmt(officerRow.totalNotices)}`,10,21);
+   doc.text(`${officerIndex+1}. ${officerRow.officer} ${officerRow.designation||"Officer"} - ${psData.length} PS | Total Notices: ${Number(officerRow.totalNotices).toLocaleString("en-IN")}`,10,21);
    doc.setFont("helvetica","normal");doc.setFontSize(7.2);
-   doc.text(`No Mapping: ${fmt(officerRow.nmLatest)} of ${fmt(officerRow.nmTotal)} disposed = ${officerRow.nmPct}% | Documents uploaded: ${fmt(officerRow.nmDocs)}    Discrepancy: ${fmt(officerRow.dLatest)} of ${fmt(officerRow.dTotal)} disposed = ${officerRow.dPct}% | BLO letters uploaded: ${fmt(officerRow.dLetters)}`,10,27);
+   doc.text(`No Mapping: ${Number(officerRow.nmLatest).toLocaleString("en-IN")} of ${Number(officerRow.nmTotal).toLocaleString("en-IN")} disposed = ${officerRow.nmPct}% | Documents uploaded: ${Number(officerRow.nmDocs).toLocaleString("en-IN")}    Discrepancy: ${Number(officerRow.dLatest).toLocaleString("en-IN")} of ${Number(officerRow.dTotal).toLocaleString("en-IN")} disposed = ${officerRow.dPct}% | BLO letters uploaded: ${Number(officerRow.dLetters).toLocaleString("en-IN")}`,10,27);
    doc.setFont("helvetica","bold");doc.setFontSize(6.6);
    doc.setTextColor(31,56,100);
    doc.text("BLUE ROWS = TOP 3 OPERATIONAL ATTENTION PS (lowest combined disposal %)",10,33);
