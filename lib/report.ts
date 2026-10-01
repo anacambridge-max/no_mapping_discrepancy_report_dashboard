@@ -136,7 +136,7 @@ export function buildReports(latest:any[],earlier:any[]){
     const l=latestByPS.get(psNo); const e=earlierByPS.get(psNo);
     const L=l||{nmTotal:0,nmDisposed:0,nmDocs:0,dTotal:0,dDisposed:0,dLetter:0,nmPending:0,dPending:0};
     const E=e||{nmDisposed:0,dDisposed:0};
-    return {psNo,officer:l?.officer||e?.officer||"UNMAPPED",designation:l?.designation||e?.designation||"",supervisor:l?.supervisor||e?.supervisor||"",blo:l?.blo||e?.blo||"",totalNotices:L.nmTotal+L.dTotal,nmTotal:L.nmTotal,nmEarlier:E.nmDisposed,nmLatest:L.nmDisposed,nmDifference:L.nmDisposed-E.nmDisposed,nmPct:percentage(L.nmDisposed,L.nmTotal),nmDocs:L.nmDocs,dTotal:L.dTotal,dEarlier:E.dDisposed,dLatest:L.dDisposed,dDifference:L.dDisposed-E.dDisposed,dPct:percentage(L.dDisposed,L.dTotal),dLetters:L.dLetter,psCount:1};
+    return {psNo,officer:l?.officer||e?.officer||"UNMAPPED",designation:l?.designation||e?.designation||"",supervisor:l?.supervisor||e?.supervisor||"",blo:l?.blo||e?.blo||"",totalNotices:L.nmTotal+L.dTotal,nmTotal:L.nmTotal,nmEarlier:E.nmDisposed,nmLatest:L.nmDisposed,nmDifference:L.nmDisposed-E.nmDisposed,nmPct:percentage(L.nmDisposed,L.nmTotal),nmDocs:L.nmDocs,nmDocsPct:percentage(L.nmDocs,L.nmTotal),dTotal:L.dTotal,dEarlier:E.dDisposed,dLatest:L.dDisposed,dDifference:L.dDisposed-E.dDisposed,dPct:percentage(L.dDisposed,L.dTotal),dLetters:L.dLetter,dLettersPct:percentage(L.dLetter,L.dTotal),psCount:1};
   }).sort((a,b)=>Number(a.psNo)-Number(b.psNo));
   return {officerRows,psRows};
 }
