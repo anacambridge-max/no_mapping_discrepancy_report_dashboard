@@ -124,8 +124,8 @@ export default function Page(){
   ]);
   body.push(["","GRAND TOTAL - AC-34 MATIALA",psCount,total.totalNotices,total.nmTotal,total.nmEarlier,total.nmLatest,total.nmDifference,total.nmPct+"%",total.nmDocs,total.nmPending,"",total.dTotal,total.dEarlier,total.dLatest,total.dDifference,total.dPct+"%",total.dLetters,total.dPending,"",total.totalDisposed,total.totalDisposedPct+"%",total.totalPending]);
 
-  const widths=[6.5,44,10,17,21,17,17,14.5,17,20,18,3,21,18,18,14.5,17,21,18,3,21,19,22];
-  const base={theme:"grid" as const,tableWidth:405,margin:{left:7.5,right:7.5,top:0,bottom:0},styles:{font:"helvetica",fontSize:7.4,cellPadding:.8,lineColor:grid,lineWidth:.25,textColor:[20,28,38] as [number,number,number],halign:"center" as const,valign:"middle" as const,overflow:"linebreak" as const},headStyles:{font:"helvetica",fontStyle:"bold" as const,fontSize:6.5,cellPadding:.85,minCellHeight:10,halign:"center" as const,valign:"middle" as const,textColor:255}};
+  const widths=[6,43,9.5,16,20,16,16,14,16,19,17,3,20,17,17,14,16,20,17,3,20,18,21];
+  const base={theme:"grid" as const,tableWidth:385,margin:{left:17.5,right:17.5,top:0,bottom:0},styles:{font:"helvetica",fontSize:8.2,cellPadding:.9,lineColor:grid,lineWidth:.25,textColor:[20,28,38] as [number,number,number],halign:"center" as const,valign:"middle" as const,overflow:"linebreak" as const},headStyles:{font:"helvetica",fontStyle:"bold" as const,fontSize:7.1,cellPadding:.9,minCellHeight:11,halign:"center" as const,valign:"middle" as const,textColor:255}};
   autoTable(doc,{...base,startY:49,head:[head1,head2],body,columnStyles:Object.fromEntries(widths.map((w,i)=>[i,{cellWidth:w,halign:i===1?"left":"center"}])),didParseCell:(data:any)=>{
     if(data.section==="head"){data.cell.styles.fillColor=data.column.index>=12&&data.column.index<=18?brown:navy;if(data.column.index===11||data.column.index===19){data.cell.styles.fillColor=[255,255,255];data.cell.styles.lineWidth=0;}return;}
     if(data.section!=="body")return;
