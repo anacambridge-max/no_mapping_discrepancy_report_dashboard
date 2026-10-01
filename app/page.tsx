@@ -14,14 +14,14 @@ const COLS=[
  "% DOCUMENTS / TOTAL NO MAPPING NOTICES","",
  "TOTAL DISCREPANCY NOTICES","DISCREPANCY DISPOSED EARLIER","DISCREPANCY DISPOSED LATEST",
  "DIFFERENCE","% OF DISCREPANCY NOTICES DISPOSED","BLO LETTER UPLOADED",
- "% BLO LETTER / TOTAL DISCREPANCY NOTICES"
+ "% BLO LETTER / TOTAL DISCREPANCY NOTICES","TOTAL NOTICES DISPOSED","% OF TOTAL NOTICES DISPOSED"
 ];
 
 function rowValues(r:OfficerReportRow,rowIndex:number){
  return [
   rowIndex+1,formatOfficer(r),r.totalNotices,r.nmTotal,r.nmEarlier,r.nmLatest,r.nmDifference,
   r.nmPct+"%",r.nmDocs,r.nmDocsPct+"%","",r.dTotal,r.dEarlier,r.dLatest,
-  r.dDifference,r.dPct+"%",r.dLetters,r.dLettersPct+"%"
+  r.dDifference,r.dPct+"%",r.dLetters,r.dLettersPct+"%",r.totalDisposed,r.totalDisposedPct+"%"
  ];
 }
 
@@ -91,7 +91,8 @@ export default function Page(){
    {content:"TOTAL\nNOTICES\n(NO\nMAPPING +\nDISCREPANCY)",rowSpan:2},
    {content:"NO MAPPING NOTICES",colSpan:7,styles:{fillColor:navy,textColor:255}},
    {content:"",rowSpan:2,styles:{fillColor:[255,255,255],textColor:[255,255,255],lineWidth:0}},
-   {content:"DISCREPANCY NOTICES",colSpan:7,styles:{fillColor:brown,textColor:255}}
+   {content:"DISCREPANCY NOTICES",colSpan:7,styles:{fillColor:brown,textColor:255}},
+   {content:"TOTAL DISPOSAL",colSpan:2,styles:{fillColor:navy,textColor:255}}
   ];
   const sub:any[]=[
    "TOTAL NO\nMAPPING\nNOTICES","NO MAPPING\nDISPOSED\nEARLIER","NO MAPPING\nDISPOSED\nLATEST","DIFFERENCE",
@@ -104,16 +105,19 @@ export default function Page(){
   body.push([
    "","GRAND TOTAL",total.totalNotices,total.nmTotal,total.nmEarlier,total.nmLatest,total.nmDifference,
    total.nmPct+"%",total.nmDocs,total.nmDocsPct+"%","",total.dTotal,total.dEarlier,total.dLatest,
-   total.dDifference,total.dPct+"%",total.dLetters,total.dLettersPct+"%"
+   total.dDifference,total.dPct+"%",total.dLetters,total.dLettersPct+"%",total.totalDisposed,total.totalDisposedPct+"%"
   ]);
 
-  const widths=[9,43,19,20,21,21,17,22,20,23,4,20,21,21,17,22,19,23];
+  const widths=[9,42,19,20,20,20,17,22,20,22,4,20,20,20,17,22,19,22,20,20];
   autoTable(doc,{
    startY:34,head:[top,sub],body,theme:"grid",tableWidth:400,margin:{left:10,right:10,bottom:18},
-   styles:{font:"helvetica",fontSize:7.2,cellPadding:1.15,lineColor:grid,lineWidth:.25,textColor:[20,28,38] as [number,number,number],halign:"center",valign:"middle",overflow:"linebreak"},
-   headStyles:{font:"helvetica",fontStyle:"bold",fontSize:6.2,halign:"center",valign:"middle"},
+   styles:{font:"helvetica",fontSize:7.0,cellPadding:1.0,lineColor:grid,lineWidth:.25,textColor:[20,28,38] as [number,number,number],halign:"center",valign:"middle",overflow:"linebreak"},
+   headStyles:{font:"helvetica",fontStyle:"bold",fontSize:5.8,halign:"center",valign:"middle",cellPadding:2.2,minCellHeight:14},
    columnStyles:Object.fromEntries(widths.map((w,i)=>[i,{cellWidth:w,halign:i===1?"left":"center"}])),
    didParseCell:(data:any)=>{
+    if(data.section==="head"){
+     data.cell.styles.minCellHeight=data.row.index===0?11:16;
+    }
     if(data.section==="body"){
      const r=rows[data.row.index];
      if(data.row.index===rows.length){
@@ -124,7 +128,7 @@ export default function Page(){
       if(data.column.index===9)data.cell.styles.fillColor=color(groups.docs.get(r.officer)||"medium");
       if(data.column.index===14)data.cell.styles.fillColor=color(groups.disc.get(r.officer)||"medium");
       if(data.column.index===17)data.cell.styles.fillColor=color(groups.letters.get(r.officer)||"medium");
-      if([5,6,8,9,13,14,16,17].includes(data.column.index))data.cell.styles.fontStyle="bold";
+      if([5,6,8,9,13,14,16,17,18,19].includes(data.column.index))data.cell.styles.fontStyle="bold";
      }
     }
    },
@@ -146,6 +150,41 @@ export default function Page(){
   doc.setFont("helvetica","normal");doc.setFontSize(6.2);
   doc.text("Applied to Difference and upload-percentage columns. Lowest third = red; highest third = green.",10,y+6);
   doc.text("Notes: Disposed means Approved / Disposed notices. % Disposed = Latest Disposed / Total Notices of that type. Difference = Latest - Earlier.",10,y+11);
+  // Detailed PS-wise tables: one section for every officer, using that officer's concerned PS only.
+  rows.forEach((officerRow,officerIndex)=>{
+   const psBody=buildOfficerPSRows(officerRow.officer);
+   if(!psBody.length)return;
+   doc.addPage();
+   doc.setFillColor(...navy);doc.rect(0,0,420,13,"F");
+   doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(10);
+   doc.text(`${officerIndex+1}. ${officerRow.officer} ${officerRow.designation||"Officer"} - ${psBody.length} PS`,210,8,{align:"center"});
+   doc.setTextColor(30,40,55);doc.setFont("helvetica","bold");doc.setFontSize(8);
+   doc.text(`CONCERNED PS-WISE NO MAPPING & DISCREPANCY DISPOSAL - ${officerRow.officer}`,10,20);
+   const pHead=[
+    "S.No.","PS No.","BLO Name","BLO Supervisor","TOTAL\nNOTICES",
+    "NO MAPPING\nNOTICES","NM DISPOSED\nEARLIER","NM DISPOSED\nLATEST","NM\nDIFF.","NM DOCS",
+    "DISCREPANCY\nNOTICES","DISP.\nEARLIER","DISP.\nLATEST","DIFF.","BLO\nLETTER",
+    "TOTAL NOTICES\nDISPOSED","% TOTAL\nNOTICES DISPOSED"
+   ];
+   const pWidths=[8,12,31,28,17,17,17,17,13,15,17,16,16,13,15,20,21];
+   autoTable(doc,{
+    startY:24,head:[pHead],body:psBody,theme:"grid",tableWidth:400,margin:{left:10,right:10,bottom:15},
+    styles:{font:"helvetica",fontSize:6.2,cellPadding:1.0,lineColor:grid,lineWidth:.25,halign:"center",valign:"middle",overflow:"linebreak"},
+    headStyles:{font:"helvetica",fontStyle:"bold",fontSize:5.7,fillColor:navy,textColor:255,cellPadding:2,minCellHeight:13},
+    columnStyles:Object.fromEntries(pWidths.map((w,i)=>[i,{cellWidth:w,halign:[2,3].includes(i)?"left":"center"}])),
+    didParseCell:(data:any)=>{
+     if(data.section==="body"){
+      if([8,13].includes(data.column.index) && Number(data.cell.raw)>0)data.cell.styles.fontStyle="bold";
+      if(data.column.index===16)data.cell.styles.fontStyle="bold";
+     }
+    },
+    didDrawPage:(data:any)=>{
+     doc.setFont("helvetica","normal");doc.setFontSize(6.5);doc.setTextColor(80,88,98);
+     doc.text("Officer Wise Progress Report - Concerned PS Details",10,290);
+     doc.text(`Page ${data.pageNumber}`,410,290,{align:"right"});
+    }
+   });
+  });
   doc.save(`Officer_Wise_Report_${new Date().toISOString().slice(0,10)}.pdf`);
  };
 
@@ -190,8 +229,8 @@ export default function Page(){
     <div className="buttons"><button onClick={excel}><Download size={15}/> Download Excel</button><button className="pdf" onClick={pdf}><FileText size={15}/> Download PDF</button></div>
    </div>
    <div className="tablewrap"><table><thead>
-    <tr className="groups"><th colSpan={3}></th><th colSpan={7}>NO MAPPING NOTICES</th><th className="sep"></th><th colSpan={7}>DISCREPANCY NOTICES</th></tr>
-    <tr>{COLS.map((c,i)=>i===10?<th key={i} className="sep"/>:<th key={i} onClick={()=>sort((["sno","officer","totalNotices","nmTotal","nmEarlier","nmLatest","nmDifference","nmPct","nmDocs","nmDocsPct","x","dTotal","dEarlier","dLatest","dDifference","dPct","dLetters","dLettersPct"][i]||"nmDifference") as keyof OfficerReportRow)}>{c}<ArrowUpDown size={10}/></th>)}</tr>
+    <tr className="groups"><th colSpan={3}></th><th colSpan={7}>NO MAPPING NOTICES</th><th className="sep"></th><th colSpan={7}>DISCREPANCY NOTICES</th><th colSpan={2}>TOTAL DISPOSAL</th></tr>
+    <tr>{COLS.map((c,i)=>i===10?<th key={i} className="sep"/>:<th key={i} onClick={()=>sort((["sno","officer","totalNotices","nmTotal","nmEarlier","nmLatest","nmDifference","nmPct","nmDocs","nmDocsPct","x","dTotal","dEarlier","dLatest","dDifference","dPct","dLetters","dLettersPct","totalDisposed","totalDisposedPct"][i]||"nmDifference") as keyof OfficerReportRow)}>{c}<ArrowUpDown size={10}/></th>)}</tr>
    </thead><tbody>
     {rows.map((r,i)=><tr key={r.officer}>
      {COLS.map((_,j)=>{
@@ -201,11 +240,11 @@ export default function Page(){
       return <td key={j} className={cls}>{rowValues(r,i)[j]}</td>;
      })}
     </tr>)}
-    <tr className="grand"><td></td><td>GRAND TOTAL</td><td>{formatNumber(total.totalNotices)}</td><td>{formatNumber(total.nmTotal)}</td><td>{formatNumber(total.nmEarlier)}</td><td>{formatNumber(total.nmLatest)}</td><td>{formatNumber(total.nmDifference)}</td><td>{total.nmPct}%</td><td>{formatNumber(total.nmDocs)}</td><td>{total.nmDocsPct}%</td><td className="sep"></td><td>{formatNumber(total.dTotal)}</td><td>{formatNumber(total.dEarlier)}</td><td>{formatNumber(total.dLatest)}</td><td>{formatNumber(total.dDifference)}</td><td>{total.dPct}%</td><td>{formatNumber(total.dLetters)}</td><td>{total.dLettersPct}%</td></tr>
+    <tr className="grand"><td></td><td>GRAND TOTAL</td><td>{formatNumber(total.totalNotices)}</td><td>{formatNumber(total.nmTotal)}</td><td>{formatNumber(total.nmEarlier)}</td><td>{formatNumber(total.nmLatest)}</td><td>{formatNumber(total.nmDifference)}</td><td>{total.nmPct}%</td><td>{formatNumber(total.nmDocs)}</td><td>{total.nmDocsPct}%</td><td className="sep"></td><td>{formatNumber(total.dTotal)}</td><td>{formatNumber(total.dEarlier)}</td><td>{formatNumber(total.dLatest)}</td><td>{formatNumber(total.dDifference)}</td><td>{total.dPct}%</td><td>{formatNumber(total.dLetters)}</td><td>{total.dLettersPct}%</td><td>{formatNumber(total.totalDisposed)}</td><td>{total.totalDisposedPct}%</td></tr>
    </tbody></table></div>
    <div className="legend"><b>COLOUR CODE:</b><span className="low">LOW (needs attention)</span><span className="medium">MEDIUM</span><span className="high">HIGH (good)</span></div>
    <div className="legendnote">Applied to Difference and upload-percentage columns. Lowest third = red; highest third = green.</div>
-   <div className="notes">Notes: Disposed means Approved / Disposed notices. % Disposed = Latest Disposed / Total Notices of that type. Difference = Latest - Earlier.</div>
+   <div className="notes">Notes: Disposed means Approved / Disposed notices. % Disposed = Latest Disposed / Total Notices of that type. Difference = Latest - Earlier. Total Notices Disposed = No Mapping Disposed + Discrepancy Disposed.</div>
   </section>:<div className="empty"><FileText size={30}/><b>Upload Earlier and Latest Excel reports</b><span>Only the FINAL PS WISE REPORT sheet is used.</span></div>}
   <style jsx global>{`
    *{box-sizing:border-box}body{margin:0;background:#f3f5f8;color:#172033;font-family:Arial,Helvetica,sans-serif}.bar{height:8px;background:#1f3864}header{background:#1f3864;color:#fff;text-align:center;padding:13px 10px 11px}header h1{font-size:25px;margin:0 0 4px;font-weight:800}header div{font-size:12px}header small{display:block;font-size:9px;margin-top:4px}.uploads{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px 22px}.upload{background:#fff;border:1px solid #b8c0cc;padding:11px}.uploadtitle b{display:block;color:#1f3864;font-size:12px}.uploadtitle span{display:block;color:#667085;font-size:10px;margin-top:2px}.drop{height:43px;border:1px dashed #8d9aad;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:6px;position:relative;font-size:11px}.drop input{position:absolute;inset:0;opacity:0;cursor:pointer}.manual{margin-top:7px;padding:6px;border:1px solid #d0d5dd;font-size:10px;width:210px}.ok{margin-top:6px;color:#20733a;font-size:10px;display:flex;align-items:center;gap:5px}.ok strong{background:#d9ead3;padding:2px 5px}.error{margin:0 22px 10px;padding:9px;background:#fde2e2;color:#8f2d2d;border:1px solid #e5a4a4;font-weight:700;display:flex;gap:6px}.panel{margin:0 22px 24px;background:#fff;border:1px solid #b8c0cc}.actions{padding:9px 10px;border-bottom:1px solid #b8c0cc;display:flex;justify-content:space-between;align-items:center}.actions b{display:block;color:#1f3864;font-size:14px}.actions span{display:block;color:#667085;font-size:10px;margin-top:2px}.buttons{display:flex;gap:7px}.buttons button{display:flex;align-items:center;gap:5px;border:1px solid #1f3864;background:#fff;color:#1f3864;padding:7px 10px;font-weight:800;font-size:11px}.buttons .pdf{background:#1f3864;color:#fff}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:1700px}th,td{border:1px solid #b8c0cc;padding:6px 5px;text-align:center;font-size:12px;line-height:1.08}th{background:#1f3864;color:#fff;font-size:9px;font-weight:800;white-space:normal;cursor:pointer}th svg{vertical-align:middle;margin-left:2px}.groups th{font-size:10px;cursor:default;padding:5px}.groups th:last-child{background:#833c0b}.groups th:nth-child(2){background:#1f3864}.groups .sep{background:#fff}.name{text-align:left;font-weight:700;white-space:normal;min-width:180px}tbody tr:nth-child(even){background:#f2f5fa}.earlier{background:#fff8e1}.colour{font-weight:800}.low{background:#f8b4b4}.medium{background:#ffe699}.high{background:#b7e1a1}.colour.low{background:#f8b4b4}.colour.medium{background:#ffe699}.colour.high{background:#b7e1a1}.sep{width:7px;min-width:7px;padding:0!important;background:#fff!important;border-left:0!important;border-right:0!important}.grand td{background:#d9e1f2!important;font-weight:800}.legend{padding:7px 10px 2px;display:flex;align-items:center;gap:8px;font-size:10px}.legend span{padding:3px 10px;font-weight:800;border:1px solid #b8c0cc}.legend .low{background:#f8b4b4}.legend .medium{background:#ffe699}.legend .high{background:#b7e1a1}.legendnote,.notes{font-size:9px;color:#475467;padding:3px 10px}.notes{padding-bottom:9px}.empty{margin:20px 22px;padding:40px;background:#fff;border:1px solid #b8c0cc;display:flex;flex-direction:column;align-items:center;gap:8px;color:#667085}.empty b{color:#1f3864}@media(max-width:900px){.uploads{grid-template-columns:1fr}.actions{align-items:flex-start;gap:10px;flex-direction:column}}@media print{.uploads,.actions{display:none!important}.panel{margin:0}body{background:#fff}}
