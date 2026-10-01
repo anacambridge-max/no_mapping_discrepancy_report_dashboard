@@ -64,9 +64,7 @@ export default function Page(){
  const psCount=new Set((latest?.rows||[]).map(r=>r.psNo)).size;
  const groups={
   nm:useMemo(()=>percentileGroups(rows,r=>r.nmDifference),[rows]),
-  docs:useMemo(()=>percentileGroups(rows,r=>r.nmDocsPct),[rows]),
   disc:useMemo(()=>percentileGroups(rows,r=>r.dDifference),[rows]),
-  letters:useMemo(()=>percentileGroups(rows,r=>r.dLettersPct),[rows]),
   totalDisposed:useMemo(()=>percentileGroups(rows,r=>r.totalDisposedPct),[rows])
  };
 
@@ -126,8 +124,8 @@ export default function Page(){
   ]);
   body.push(["","GRAND TOTAL - AC-34 MATIALA",psCount,total.totalNotices,total.nmTotal,total.nmEarlier,total.nmLatest,total.nmDifference,total.nmPct+"%",total.nmDocs,total.nmPending,"",total.dTotal,total.dEarlier,total.dLatest,total.dDifference,total.dPct+"%",total.dLetters,total.dPending,"",total.totalDisposed,total.totalDisposedPct+"%",total.totalPending]);
 
-  const widths=[7,45,11,18,22,18,18,15,18,21,19,3,22,19,19,15,18,22,19,3,22,20,23];
-  const base={theme:"grid" as const,tableWidth:400,margin:{left:10,right:10,top:0,bottom:0},styles:{font:"helvetica",fontSize:5.7,cellPadding:.65,lineColor:grid,lineWidth:.25,textColor:[20,28,38] as [number,number,number],halign:"center" as const,valign:"middle" as const,overflow:"linebreak" as const},headStyles:{font:"helvetica",fontStyle:"bold" as const,fontSize:5.0,cellPadding:.7,minCellHeight:8,halign:"center" as const,valign:"middle" as const,textColor:255}};
+  const widths=[6.5,44,10,17,21,17,17,14.5,17,20,18,3,21,18,18,14.5,17,21,18,3,21,19,22];
+  const base={theme:"grid" as const,tableWidth:405,margin:{left:7.5,right:7.5,top:0,bottom:0},styles:{font:"helvetica",fontSize:6.6,cellPadding:.72,lineColor:grid,lineWidth:.25,textColor:[20,28,38] as [number,number,number],halign:"center" as const,valign:"middle" as const,overflow:"linebreak" as const},headStyles:{font:"helvetica",fontStyle:"bold" as const,fontSize:5.9,cellPadding:.8,minCellHeight:9,halign:"center" as const,valign:"middle" as const,textColor:255}};
   autoTable(doc,{...base,startY:49,head:[head1,head2],body,columnStyles:Object.fromEntries(widths.map((w,i)=>[i,{cellWidth:w,halign:i===1?"left":"center"}])),didParseCell:(data:any)=>{
     if(data.section==="head"){data.cell.styles.fillColor=data.column.index>=12&&data.column.index<=18?brown:navy;if(data.column.index===11||data.column.index===19){data.cell.styles.fillColor=[255,255,255];data.cell.styles.lineWidth=0;}return;}
     if(data.section!=="body")return;
@@ -135,9 +133,7 @@ export default function Page(){
     const r=rows[data.row.index];if(!r)return;
     if(data.column.index===4||data.column.index===12)data.cell.styles.fillColor=yellow;
     if(data.column.index===7||data.column.index===8)data.cell.styles.fillColor=color(groups.nm.get(r.officer)||"medium");
-    if(data.column.index===9)data.cell.styles.fillColor=color(groups.docs.get(r.officer)||"medium");
     if(data.column.index===15||data.column.index===16)data.cell.styles.fillColor=color(groups.disc.get(r.officer)||"medium");
-    if(data.column.index===17)data.cell.styles.fillColor=color(groups.letters.get(r.officer)||"medium");
     if(data.column.index===21)data.cell.styles.fillColor=color(groups.totalDisposed.get(r.officer)||"medium");
   }});
   const fy=281;doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(40,48,58);doc.text("COLOUR CODE:",10,fy);
