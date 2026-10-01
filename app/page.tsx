@@ -25,7 +25,7 @@ function values(r:OfficerReportRow,i:number){
  ][i];
 }
 
-const color=(kind:string)=>kind==="low"?[248,180,180]:kind==="medium"?[255,230,153]:[183,225,161];
+const color=(kind:string):[number,number,number]=>kind==="low"?[248,180,180]:kind==="medium"?[255,230,153]:[183,225,161];
 
 export default function Page(){
  const [earlier,setEarlier]=useState<ParsedReport|null>(null);
@@ -77,7 +77,7 @@ export default function Page(){
  const pdf=()=>{
   if(!latest||!earlier)return;
   const doc=new jsPDF({orientation:"landscape",unit:"mm",format:"a3"});
-  const navy=[31,56,100],brown=[131,60,11],yellow=[255,248,225],grid=[184,192,204];
+  const navy:[number,number,number]=[31,56,100],brown:[number,number,number]=[131,60,11],yellow:[number,number,number]=[255,248,225],grid:[number,number,number]=[184,192,204];
   doc.setFillColor(...navy);doc.rect(0,0,420,29,"F");
   doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(17);
   doc.text("OFFICER WISE PROGRESS REPORT",210,9,{align:"center"});
@@ -85,7 +85,7 @@ export default function Page(){
   doc.text("No Mapping & Discrepancy Notices - Earlier vs Latest Disposal Status",210,15,{align:"center"});
   doc.text(`Data as of ${latest.timestamp} | ${rows.length} Officers | ${psCount} Polling Stations`,210,21,{align:"center"});
 
-  const top=[
+  const top:any[]=[
    {content:"S.N\no.",rowSpan:2},
    {content:"OFFICER NAME AND\nDESIGNATION",rowSpan:2},
    {content:"TOTAL\nNOTICES\n(NO\nMAPPING +\nDISCREPANCY)",rowSpan:2},
@@ -93,7 +93,7 @@ export default function Page(){
    {content:"",rowSpan:2,styles:{fillColor:[255,255,255],textColor:[255,255,255],lineWidth:0}},
    {content:"DISCREPANCY NOTICES",colSpan:7,styles:{fillColor:brown,textColor:255}}
   ];
-  const sub=[
+  const sub:any[]=[
    "TOTAL NO\nMAPPING\nNOTICES","NO MAPPING\nDISPOSED\nEARLIER","NO MAPPING\nDISPOSED\nLATEST","DIFFERENCE",
    "% OF NO\nMAPPING\nNOTICES\nDISPOSED","NO MAPPING D\nOCUMENTS\nUPLOADED","% DOCUMENTS /\nTOTAL NO MAPPING\nNOTICES",
    "TOTAL DISCREPANCY\nNOTICES","DISCREPANCY\nDISPOSED\nEARLIER","DISCREPANCY\nDISPOSED\nLATEST","DIFFERENCE",
