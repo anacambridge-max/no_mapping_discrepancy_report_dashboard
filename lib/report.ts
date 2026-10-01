@@ -65,7 +65,7 @@ const key=(row:RawRow,names:string[])=>{
 export const n=(v:any)=>{const x=Number(String(v??"").replace(/,/g,"")); return Number.isFinite(x)?x:0;};
 export const percentage=(a:number,b:number)=>b?Math.round((a/b)*1000)/10:0;
 
-function parseTimestamp(name:string,lastModified:number,manual?:string){
+export function parseTimestamp(name:string,lastModified:number,manual?:string){
   if(manual?.trim()) return manual.trim();
   const clean=name.replace(/[_-]/g," ");
   const dateMatch=clean.match(/(\d{1,2})[\s./](\d{1,2})[\s./](20\d{2})/);
