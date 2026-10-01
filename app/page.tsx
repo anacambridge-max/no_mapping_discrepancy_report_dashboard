@@ -98,7 +98,7 @@ export default function Page(){
    "% OF NO\nMAPPING\nNOTICES\nDISPOSED","NO MAPPING D\nOCUMENTS\nUPLOADED","% DOCUMENTS /\nTOTAL NO MAPPING\nNOTICES",
    "TOTAL DISCREPANCY\nNOTICES","DISCREPANCY\nDISPOSED\nEARLIER","DISCREPANCY\nDISPOSED\nLATEST","DIFFERENCE",
    "% OF DISCREPANCY\nNOTICES\nDISPOSED","BLO LETTER\nUPLOADED","% BLO LETTER /\nTOTAL DISCREPANCY\nNOTICES"
-  ].map((content,i)=>({content,styles:{fillColor:i<7?navy:brown,textColor:255}}));
+  ].map((content,i)=>({content,styles:{fillColor:(i<7?navy:brown) as [number,number,number],textColor:255}}));
 
   const body=rows.map(r=>COLS.map((_,i)=>values(r,i)));
   body.push([
@@ -110,7 +110,7 @@ export default function Page(){
   const widths=[9,43,19,20,21,21,17,22,20,23,4,20,21,21,17,22,19,23];
   autoTable(doc,{
    startY:34,head:[top,sub],body,theme:"grid",tableWidth:400,margin:{left:10,right:10,bottom:18},
-   styles:{font:"helvetica",fontSize:7.2,cellPadding:1.15,lineColor:grid,lineWidth:.25,textColor:[20,28,38],halign:"center",valign:"middle",overflow:"linebreak"},
+   styles:{font:"helvetica",fontSize:7.2,cellPadding:1.15,lineColor:grid,lineWidth:.25,textColor:[20,28,38] as [number,number,number],halign:"center",valign:"middle",overflow:"linebreak"},
    headStyles:{font:"helvetica",fontStyle:"bold",fontSize:6.2,halign:"center",valign:"middle"},
    columnStyles:Object.fromEntries(widths.map((w,i)=>[i,{cellWidth:w,halign:i===1?"left":"center"}])),
    didParseCell:(data:any)=>{
