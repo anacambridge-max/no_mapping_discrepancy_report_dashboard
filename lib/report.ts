@@ -142,7 +142,7 @@ export function buildReports(latest:any[],earlier:any[]){
 }
 
 export function grandOfficer(rows:OfficerReportRow[]){
-  const x=rows.reduce((a,r)=>{a.totalNotices+=r.totalNotices;a.nmTotal+=r.nmTotal;a.nmEarlier+=r.nmEarlier;a.nmLatest+=r.nmLatest;a.nmDifference+=r.nmDifference;a.nmDocs+=r.nmDocs;a.nmDocsPct+=0;a.dTotal+=r.dTotal;a.dEarlier+=r.dEarlier;a.dLatest+=r.dLatest;a.dDifference+=r.dDifference;a.dLetters+=r.dLetters;a.dLettersPct+=0;a.psCount+=r.psCount;return a;},{totalNotices:0,nmTotal:0,nmEarlier:0,nmLatest:0,nmDifference:0,nmDocs:0,dTotal:0,dEarlier:0,dLatest:0,dDifference:0,dLetters:0,dLettersPct:0,psCount:0});
+  const x=rows.reduce((a,r)=>{a.totalNotices+=r.totalNotices;a.nmTotal+=r.nmTotal;a.nmEarlier+=r.nmEarlier;a.nmLatest+=r.nmLatest;a.nmDifference+=r.nmDifference;a.nmDocs+=r.nmDocs;a.nmDocsPct+=0;a.dTotal+=r.dTotal;a.dEarlier+=r.dEarlier;a.dLatest+=r.dLatest;a.dDifference+=r.dDifference;a.dLetters+=r.dLetters;a.dLettersPct+=0;a.psCount+=r.psCount;return a;},{totalNotices:0,nmTotal:0,nmEarlier:0,nmLatest:0,nmDifference:0,nmDocs:0,nmDocsPct:0,dTotal:0,dEarlier:0,dLatest:0,dDifference:0,dLetters:0,dLettersPct:0,psCount:0});
   return {...x,nmPct:percentage(x.nmLatest,x.nmTotal),nmDocsPct:percentage(x.nmDocs,x.nmTotal),dPct:percentage(x.dLatest,x.dTotal),dLettersPct:percentage(x.dLetters,x.dTotal)};
 }
 
