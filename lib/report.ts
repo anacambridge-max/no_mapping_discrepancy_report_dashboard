@@ -9,9 +9,9 @@ export type NormalizedRow = {
 export type OfficerReportRow = {
   officer:string; designation:string; totalNotices:number;
   nmTotal:number; nmEarlier:number; nmLatest:number; nmDifference:number; nmPct:number;
-  nmDocs:number; nmDocsPct:number;
+  nmDocs:number; nmDocsPct:number; nmPending:number;
   dTotal:number; dEarlier:number; dLatest:number; dDifference:number; dPct:number;
-  dLetters:number; dLettersPct:number; psCount:number;
+  dLetters:number; dLettersPct:number; dPending:number; psCount:number;
   totalDisposed:number; totalDisposedPct:number; totalPending:number;
 };
 
