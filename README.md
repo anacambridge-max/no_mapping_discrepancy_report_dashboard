@@ -8,3 +8,5 @@ Planned workflow:
 - Calculate snapshot movement and latest disposal/document-upload percentages
 - Provide PS-wise, BLO-wise, BLO Supervisor-wise, Officer-wise and Consolidated reports
 - Export professionally formatted colour-coded PDFs
+
+Current main build includes officer-wise pending notice metrics and total-notice disposal metrics.
