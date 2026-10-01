@@ -168,72 +168,90 @@ export default function Page(){
   doc.setFont("helvetica","normal");doc.setFontSize(7);
   doc.text("Applied to Difference and percentage columns. Lowest third = red; highest third = green.",10,y+6);
   doc.text("Notes: Disposed means Approved / Disposed notices. % Disposed = Latest Disposed / Total Notices of that type. Difference = Latest - Earlier.",10,y+11);
-  // Detailed PS-wise tables: one section for every officer, using that officer's concerned PS only.
+  // Detailed PS-wise pages follow the uploaded AC34 Officer PS-wise reference layout.
   rows.forEach((officerRow,officerIndex)=>{
    const psBody=buildOfficerPSRows(officerRow.officer);
    if(!psBody.length)return;
-   const psTotal=[
-    "","OFFICER TOTAL","", "",officerRow.totalNotices,
-    officerRow.nmTotal,officerRow.nmEarlier,officerRow.nmLatest,officerRow.nmDifference,officerRow.nmDocs,
-    officerRow.dTotal,officerRow.dEarlier,officerRow.dLatest,officerRow.dDifference,officerRow.dLetters,
-    officerRow.totalDisposed,officerRow.totalDisposedPct+"%"
-   ];
-   psBody.push(psTotal);
-   doc.addPage();
-   doc.setFillColor(...navy);doc.rect(0,0,297,13,"F");
-   doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(10);
-   doc.text(`${officerIndex+1}. ${officerRow.officer} ${officerRow.designation||"Officer"} - ${psBody.length} PS`,148.5,8,{align:"center"});
-   doc.setTextColor(30,40,55);doc.setFont("helvetica","bold");doc.setFontSize(8);
-   doc.text(`CONCERNED PS-WISE NO MAPPING & DISCREPANCY DISPOSAL - ${officerRow.officer}`,10,20);
-   const pHead=[
-    "S.No.","PS No.","BLO Name","BLO Supervisor","TOTAL\nNOTICES",
-    "NO MAPPING\nNOTICES","NM DISPOSED\nEARLIER","NM DISPOSED\nLATEST","NM\nDIFF.","NM DOCS",
-    "DISCREPANCY\nNOTICES","DISP.\nEARLIER","DISP.\nLATEST","DIFF.","BLO\nLETTER",
-    "TOTAL NOTICES\nDISPOSED","% TOTAL\nNOTICES DISPOSED"
-   ];
-   const pWidths=[6,9,22,20,12,12,12,12,9,11,12,11,11,9,11,14,14];
-   const psData=psBody.slice(0,-1);
-   const psGroups=(idx:number)=>{
-    const vals=psData.map((r:any)=>Number(r[idx])||0).sort((a:number,b:number)=>a-b);
+   const psData=psBody.map((r:any)=>({
+    sno:r[0],ps:r[1],blo:r[2],sup:r[3],nm:r[5],nmDisp:r[7],nmDocs:r[9],
+    disc:r[10],discDisp:r[12],letters:r[14],totalDisposed:r[15],pending:(Number(r[4])||0)-(Number(r[15])||0)
+   }));
+   const attention=psData.map((r:any)=>r.nm+r.disc?100*((r.nmDisp||0)+(r.discDisp||0))/(r.nm+r.disc):0);
+   const ranked=attention.map((v:number,i:number)=>({v,i})).sort((a,b)=>a.v-b.v);
+   const attentionSet=new Set(ranked.slice(0,Math.min(3,ranked.length)).map(x=>x.i));
+   const zeroSet=new Set(psData.map((r:any,i:number)=>((r.nmDisp||0)===0&&(r.discDisp||0)===0)?i:-1).filter(i=>i>=0));
+
+   const pctGroups=(key:string)=>{
+    const vals=psData.map((r:any)=>Number(r[key])||0).sort((a:number,b:number)=>a-b);
     if(!vals.length)return [] as string[];
     const q=(p:number)=>{const z=(vals.length-1)*p,lo=Math.floor(z),hi=Math.ceil(z);return vals[lo]+(vals[hi]-vals[lo])*(z-lo);};
     const p33=q(1/3),p66=q(2/3);
-    return psData.map((r:any)=>{const v=Number(r[idx])||0;return v<=p33?"low":v<=p66?"medium":"high";});
+    return psData.map((r:any)=>{const v=Number(r[key])||0;return v<=p33?"low":v<=p66?"medium":"high";});
    };
-   const psNmDiffGroups=psGroups(8),psDiscDiffGroups=psGroups(13),psTotalPctGroups=psGroups(16);
+   const nmDocGroups=pctGroups("nmDocs"), letterGroups=pctGroups("letters");
+
+   doc.addPage("a4","landscape");
+   doc.setFillColor(...navy);doc.rect(0,0,297,12,"F");
+   doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(7);
+   doc.text("OFFICE OF THE ELECTORAL REGISTRATION OFFICER, AC-34, MATIALA",148.5,7,{align:"center"});
+   doc.setTextColor(40,48,58);doc.setFont("helvetica","bold");doc.setFontSize(10);
+   doc.text(`${officerIndex+1}. ${officerRow.officer} ${officerRow.designation||"Officer"} - ${psData.length} PS | Total Notices: ${fmt(officerRow.totalNotices)}`,10,21);
+   doc.setFont("helvetica","normal");doc.setFontSize(7.2);
+   doc.text(`No Mapping: ${fmt(officerRow.nmLatest)} of ${fmt(officerRow.nmTotal)} disposed = ${officerRow.nmPct}% | Documents uploaded: ${fmt(officerRow.nmDocs)}    Discrepancy: ${fmt(officerRow.dLatest)} of ${fmt(officerRow.dTotal)} disposed = ${officerRow.dPct}% | BLO letters uploaded: ${fmt(officerRow.dLetters)}`,10,27);
+   doc.setFont("helvetica","bold");doc.setFontSize(6.6);
+   doc.setTextColor(31,56,100);
+   doc.text("BLUE ROWS = TOP 3 OPERATIONAL ATTENTION PS (lowest combined disposal %)",10,33);
+   doc.setTextColor(170,35,35);
+   doc.text("RED ROWS = ZERO DISPOSAL PS",143,33);
+
+   const pHead=[
+    "S.No.","P.S. NO.","BLO NAME","BLO SUPERVISOR","NO MAPPING\nNOTICES","NM\nDISPOSED","% NM\nDISP.","NM DOCS\nUPLOADED",
+    "DISCREPANCY\nNOTICES","DISC.\nDISPOSED","% DISC.\nDISP.","BLO LETTER\nUPLOADED","PENDING EPIC\n(NM+DISC)"
+   ];
+   const pRows=psData.map((r:any)=>[
+    r.sno,r.ps,r.blo,r.sup,r.nm,r.nmDisp,percentage(r.nmDisp,r.nm)+"%",r.nmDocs,
+    r.disc,r.discDisp,percentage(r.discDisp,r.disc)+"%",r.letters,r.pending
+   ]);
+   pRows.push([
+    "","TOTAL - ${officerRow.officer}, ${officerRow.designation||"Officer"} (${psData.length} PS)",
+    "", "",officerRow.nmTotal,officerRow.nmLatest,officerRow.nmPct+"%",officerRow.nmDocs,
+    officerRow.dTotal,officerRow.dLatest,officerRow.dPct+"%",officerRow.dLetters,
+    officerRow.totalNotices-officerRow.totalDisposed
+   ]);
+   const pWidths=[7,10,35,34,15,14,13,17,17,14,13,18,22];
    autoTable(doc,{
-    startY:24,head:[pHead],body:psBody,theme:"grid",tableWidth:277,margin:{left:10,right:10,bottom:15},
-    styles:{font:"helvetica",fontSize:7.0,cellPadding:1.05,lineColor:grid,lineWidth:.25,halign:"center",valign:"middle",overflow:"linebreak"},
-    headStyles:{font:"helvetica",fontStyle:"bold",fontSize:6.0,fillColor:navy,textColor:255,cellPadding:2.1,minCellHeight:15},
+    startY:37,head:[pHead],body:pRows,theme:"grid",tableWidth:247,margin:{left:10,right:40,bottom:12},
+    styles:{font:"helvetica",fontSize:7.8,cellPadding:1.25,lineColor:grid,lineWidth:.25,halign:"center",valign:"middle",overflow:"linebreak",textColor:[20,28,38] as [number,number,number]},
+    headStyles:{font:"helvetica",fontStyle:"bold",fontSize:6.6,fillColor:navy,textColor:255,cellPadding:2.0,minCellHeight:12},
     columnStyles:Object.fromEntries(pWidths.map((w,i)=>[i,{cellWidth:w,halign:[2,3].includes(i)?"left":"center"}])),
     didParseCell:(data:any)=>{
-     if(data.section==="body"){
-      if(data.row.index===psBody.length-1){
-       data.cell.styles.fillColor=[217,225,242];data.cell.styles.fontStyle="bold";
-      }else{
-       const ri=data.row.index;
-       if(data.column.index===8){
-        data.cell.styles.fillColor=color(psNmDiffGroups[ri]||"medium");
-        data.cell.styles.fontStyle="bold";
-       }
-       if(data.column.index===13){
-        data.cell.styles.fillColor=color(psDiscDiffGroups[ri]||"medium");
-        data.cell.styles.fontStyle="bold";
-       }
-       if(data.column.index===16){
-        data.cell.styles.fillColor=color(psTotalPctGroups[ri]||"medium");
-        data.cell.styles.fontStyle="bold";
-       }
-      }
+     if(data.section!=="body")return;
+     if(data.row.index===pRows.length-1){
+      data.cell.styles.fillColor=[217,225,242];data.cell.styles.fontStyle="bold";
+      return;
      }
+     const ri=data.row.index;
+     if(zeroSet.has(ri)){
+      data.cell.styles.fillColor=[248,180,180];
+     }else if(attentionSet.has(ri)){
+      data.cell.styles.fillColor=[221,235,247];
+     }
+     if(data.column.index===7){
+      data.cell.styles.fillColor=color(nmDocGroups[ri]||"medium");data.cell.styles.fontStyle="bold";
+     }
+     if(data.column.index===11){
+      data.cell.styles.fillColor=color(letterGroups[ri]||"medium");data.cell.styles.fontStyle="bold";
+     }
+     if(data.column.index===6||data.column.index===10)data.cell.styles.fontStyle="bold";
     },
     didDrawPage:(data:any)=>{
-     doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(80,88,98);
-     doc.text("Officer Wise Progress Report - Concerned PS Details",10,412);
-     doc.text(`Page ${data.pageNumber}`,287,412,{align:"right"});
+     doc.setFont("helvetica","normal");doc.setFontSize(6.5);doc.setTextColor(80,88,98);
+     doc.text(`AC-34 MATIALA | SIR-2026 | NOTICE DISPOSAL REPORT (NO MAPPING & DISCREPANCY) | Data: ${latest.timestamp}`,10,202);
+     doc.text(`Page ${data.pageNumber}`,287,202,{align:"right"});
     }
    });
   });
+
   doc.save(`Officer_Wise_Report_${new Date().toISOString().slice(0,10)}.pdf`);
  };
 
