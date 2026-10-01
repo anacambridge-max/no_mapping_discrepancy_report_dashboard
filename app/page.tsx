@@ -103,18 +103,18 @@ export default function Page(){
         if(isOfficer){if(idx===6)c=groups.nm;if(idx===8)c=groups.docs;if(idx===13)c=groups.disc;if(idx===15)c=groups.letters;}
         else {if(idx===9)c=groups.nm;if(idx===11)c=groups.docs;if(idx===16)c=groups.disc;if(idx===18)c=groups.letters;}
         if(c)d.cell.styles.fillColor=fill(c,r);
-        if(isOfficer&&[4,6,11,13].includes(idx))d.cell.styles.fillColor=[255,248,225];
-        if(!isOfficer&&[7,9,14,16].includes(idx))d.cell.styles.fillColor=[255,248,225];
+        if(isOfficer&&[4,11].includes(idx))d.cell.styles.fillColor=[255,248,225];
+        if(!isOfficer&&[7,14].includes(idx))d.cell.styles.fillColor=[255,248,225];
         if((isOfficer&&[5,6,8,12,13,15].includes(idx))||(!isOfficer&&[8,9,11,15,16,18].includes(idx)))d.cell.styles.fontStyle="bold";
       }
-    },didDrawPage:(d:any)=>{doc.setFontSize(7);doc.setTextColor(85,94,106);doc.text("Officer Wise Progress Report - No Mapping & Discrepancy Notices",10,290);doc.text(`Page ${d.pageNumber}`,410,290,{align:"right"});}
+    },didDrawPage:(d:any)=>{doc.setFontSize(7);doc.setTextColor(85,94,106);doc.text(`${isOfficer?"Officer":"PS"} Wise Progress Report - No Mapping & Discrepancy Notices`,10,290);doc.text(`Page ${d.pageNumber}`,410,290,{align:"right"});}
    });
    const y=(doc as any).lastAutoTable.finalY+7;
    doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(40,48,58);doc.text("COLOUR CODE:",10,y);
    const legend=[["LOW (needs attention)",[248,180,180]],["MEDIUM",[255,230,153]],["HIGH (good)",[183,225,161]]];let x=35;legend.forEach(([label,c]:any)=>{doc.setFillColor(c[0],c[1],c[2]);doc.rect(x,y-4,28,5,"F");doc.setTextColor(40,48,58);doc.text(label,x+31,y);x+=80;});
    doc.setFont("helvetica","normal");doc.setFontSize(7);doc.text(`Applied to Difference, ${colourByPending?"Documents Uploaded / Pending EPIC and BLO Letter Uploaded / Pending EPIC":"Documents Uploaded and BLO Letter Uploaded"}. Officers/PSs are grouped in thirds.`,10,y+6);
    doc.text("Notes: Disposed means Approved / Disposed notices. % Disposed = Latest Disposed / Total Notices of that type. Difference = Latest - Earlier.",10,y+12);
-   doc.save(`Officer_Wise_Report_${new Date().toISOString().slice(0,10)}.pdf`);
+   doc.save(`${isOfficer?"Officer_Wise_Report":"PS_Wise_Report"}_${new Date().toISOString().slice(0,10)}.pdf`);
  };
 
  const excel=()=>{
