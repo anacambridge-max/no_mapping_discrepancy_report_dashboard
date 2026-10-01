@@ -111,7 +111,7 @@ export default function Page(){
    });
    const y=(doc as any).lastAutoTable.finalY+7;
    doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(40,48,58);doc.text("COLOUR CODE:",10,y);
-   const legend=[["LOW (needs attention)",[248,180,180]],["MEDIUM",[255,230,153]],["HIGH (good)",[183,225,161]]];let x=35;legend.forEach(([label,c]:any)=>{doc.setFillColor(...c);doc.rect(x,y-4,28,5,"F");doc.setTextColor(40,48,58);doc.text(label,x+31,y,x+70>390?{}:{});x+=80;});
+   const legend=[["LOW (needs attention)",[248,180,180]],["MEDIUM",[255,230,153]],["HIGH (good)",[183,225,161]]];let x=35;legend.forEach(([label,c]:any)=>{doc.setFillColor(c[0],c[1],c[2]);doc.rect(x,y-4,28,5,"F");doc.setTextColor(40,48,58);doc.text(label,x+31,y);x+=80;});
    doc.setFont("helvetica","normal");doc.setFontSize(7);doc.text(`Applied to Difference, ${colourByPending?"Documents Uploaded / Pending EPIC and BLO Letter Uploaded / Pending EPIC":"Documents Uploaded and BLO Letter Uploaded"}. Officers/PSs are grouped in thirds.`,10,y+6);
    doc.text("Notes: Disposed means Approved / Disposed notices. % Disposed = Latest Disposed / Total Notices of that type. Difference = Latest - Earlier.",10,y+12);
    doc.save(`Officer_Wise_Report_${new Date().toISOString().slice(0,10)}.pdf`);
