@@ -220,5 +220,3 @@ export default function Page(){
   `}</style>
  </main>;
 }
-
-[executed on device: Akashs-MacBook-Air.local (4036675e-2011-40ea-be95-0a3a36abe389)]
