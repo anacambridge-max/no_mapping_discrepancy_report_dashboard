@@ -67,7 +67,8 @@ export default function Page(){
   nm:useMemo(()=>percentileGroups(rows,r=>r.nmDifference),[rows]),
   docs:useMemo(()=>percentileGroups(rows,r=>r.nmDocsPct),[rows]),
   disc:useMemo(()=>percentileGroups(rows,r=>r.dDifference),[rows]),
-  letters:useMemo(()=>percentileGroups(rows,r=>r.dLettersPct),[rows])
+  letters:useMemo(()=>percentileGroups(rows,r=>r.dLettersPct),[rows]),
+  totalDisposed:useMemo(()=>percentileGroups(rows,r=>r.totalDisposedPct),[rows])
  };
 
  const sort=(key:keyof OfficerReportRow)=>{
@@ -87,14 +88,14 @@ export default function Page(){
 
  const pdf=()=>{
   if(!latest||!earlier)return;
-  const doc=new jsPDF({orientation:"landscape",unit:"mm",format:"a3"});
+  const doc=new jsPDF({orientation:"portrait",unit:"mm",format:"a3"});
   const navy:[number,number,number]=[31,56,100],brown:[number,number,number]=[131,60,11],yellow:[number,number,number]=[255,248,225],grid:[number,number,number]=[184,192,204];
-  doc.setFillColor(...navy);doc.rect(0,0,420,29,"F");
+  doc.setFillColor(...navy);doc.rect(0,0,297,29,"F");
   doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(17);
-  doc.text("OFFICER WISE PROGRESS REPORT",210,9,{align:"center"});
+  doc.text("OFFICER WISE PROGRESS REPORT",148.5,9,{align:"center"});
   doc.setFont("helvetica","normal");doc.setFontSize(8);
-  doc.text("No Mapping & Discrepancy Notices - Earlier vs Latest Disposal Status",210,15,{align:"center"});
-  doc.text(`Data as of ${latest.timestamp} | ${rows.length} Officers | ${psCount} Polling Stations`,210,21,{align:"center"});
+  doc.text("No Mapping & Discrepancy Notices - Earlier vs Latest Disposal Status",148.5,15,{align:"center"});
+  doc.text(`Data as of ${latest.timestamp} | ${rows.length} Officers | ${psCount} Polling Stations`,148.5,21,{align:"center"});
 
   const top:any[]=[
    {content:"S.N\no.",rowSpan:2},
@@ -119,11 +120,11 @@ export default function Page(){
    total.dDifference,total.dPct+"%",total.dLetters,total.dLettersPct+"%",total.totalDisposed,total.totalDisposedPct+"%"
   ]);
 
-  const widths=[9,42,19,20,20,20,17,22,20,22,4,20,20,20,17,22,19,22,20,20];
+  const widths=[7,29,13,14,14,14,12,16,14,16,3,14,14,14,12,16,13,16,14,15];
   autoTable(doc,{
-   startY:34,head:[top,sub],body,theme:"grid",tableWidth:400,margin:{left:10,right:10,bottom:18},
-   styles:{font:"helvetica",fontSize:7.0,cellPadding:1.0,lineColor:grid,lineWidth:.25,textColor:[20,28,38] as [number,number,number],halign:"center",valign:"middle",overflow:"linebreak"},
-   headStyles:{font:"helvetica",fontStyle:"bold",fontSize:5.8,halign:"center",valign:"middle",cellPadding:2.2,minCellHeight:14},
+   startY:34,head:[top,sub],body,theme:"grid",tableWidth:277,margin:{left:10,right:10,bottom:18},
+   styles:{font:"helvetica",fontSize:6.4,cellPadding:1.0,lineColor:grid,lineWidth:.25,textColor:[20,28,38] as [number,number,number],halign:"center",valign:"middle",overflow:"linebreak"},
+   headStyles:{font:"helvetica",fontStyle:"bold",fontSize:5.5,halign:"center",valign:"middle",cellPadding:2.2,minCellHeight:15},
    columnStyles:Object.fromEntries(widths.map((w,i)=>[i,{cellWidth:w,halign:i===1?"left":"center"}])),
    didParseCell:(data:any)=>{
     if(data.section==="head"){
@@ -139,19 +140,20 @@ export default function Page(){
       if(data.column.index===9)data.cell.styles.fillColor=color(groups.docs.get(r.officer)||"medium");
       if(data.column.index===14)data.cell.styles.fillColor=color(groups.disc.get(r.officer)||"medium");
       if(data.column.index===17)data.cell.styles.fillColor=color(groups.letters.get(r.officer)||"medium");
+      if(data.column.index===19)data.cell.styles.fillColor=color(groups.totalDisposed.get(r.officer)||"medium");
       if([5,6,8,9,13,14,16,17,18,19].includes(data.column.index))data.cell.styles.fontStyle="bold";
      }
     }
    },
    didDrawPage:(data:any)=>{
     doc.setFont("helvetica","normal");doc.setFontSize(6.5);doc.setTextColor(80,88,98);
-    doc.text("Officer Wise Progress Report - No Mapping & Discrepancy Notices",10,290);
-    doc.text(`Page ${data.pageNumber}`,410,290,{align:"right"});
+    doc.text("Officer Wise Progress Report - No Mapping & Discrepancy Notices",10,412);
+    doc.text(`Page ${data.pageNumber}`,287,412,{align:"right"});
    }
   });
 
   let y=((doc as any).lastAutoTable?.finalY||260)+6;
-  if(y>278){doc.addPage();y=18;}
+  if(y>395){doc.addPage();y=18;}
   doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(40,48,58);doc.text("COLOUR CODE:",10,y);
   let x=34;
   [["LOW (needs attention)","low"],["MEDIUM","medium"],["HIGH (good)","high"]].forEach(([label,k])=>{
@@ -159,7 +161,7 @@ export default function Page(){
    doc.setTextColor(40,48,58);doc.text(label,x+29,y);x+=78;
   });
   doc.setFont("helvetica","normal");doc.setFontSize(6.2);
-  doc.text("Applied to Difference and upload-percentage columns. Lowest third = red; highest third = green.",10,y+6);
+  doc.text("Applied to Difference and percentage columns. Lowest third = red; highest third = green.",10,y+6);
   doc.text("Notes: Disposed means Approved / Disposed notices. % Disposed = Latest Disposed / Total Notices of that type. Difference = Latest - Earlier.",10,y+11);
   // Detailed PS-wise tables: one section for every officer, using that officer's concerned PS only.
   rows.forEach((officerRow,officerIndex)=>{
@@ -173,9 +175,9 @@ export default function Page(){
    ];
    psBody.push(psTotal);
    doc.addPage();
-   doc.setFillColor(...navy);doc.rect(0,0,420,13,"F");
+   doc.setFillColor(...navy);doc.rect(0,0,297,13,"F");
    doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(10);
-   doc.text(`${officerIndex+1}. ${officerRow.officer} ${officerRow.designation||"Officer"} - ${psBody.length} PS`,210,8,{align:"center"});
+   doc.text(`${officerIndex+1}. ${officerRow.officer} ${officerRow.designation||"Officer"} - ${psBody.length} PS`,148.5,8,{align:"center"});
    doc.setTextColor(30,40,55);doc.setFont("helvetica","bold");doc.setFontSize(8);
    doc.text(`CONCERNED PS-WISE NO MAPPING & DISCREPANCY DISPOSAL - ${officerRow.officer}`,10,20);
    const pHead=[
@@ -184,11 +186,20 @@ export default function Page(){
     "DISCREPANCY\nNOTICES","DISP.\nEARLIER","DISP.\nLATEST","DIFF.","BLO\nLETTER",
     "TOTAL NOTICES\nDISPOSED","% TOTAL\nNOTICES DISPOSED"
    ];
-   const pWidths=[8,12,31,28,17,17,17,17,13,15,17,16,16,13,15,20,21];
+   const pWidths=[6,9,22,20,12,12,12,12,9,11,12,11,11,9,11,14,14];
+   const psData=psBody.slice(0,-1);
+   const psGroups=(idx:number)=>{
+    const vals=psData.map((r:any)=>Number(r[idx])||0).sort((a:number,b:number)=>a-b);
+    if(!vals.length)return [] as string[];
+    const q=(p:number)=>{const z=(vals.length-1)*p,lo=Math.floor(z),hi=Math.ceil(z);return vals[lo]+(vals[hi]-vals[lo])*(z-lo);};
+    const p33=q(1/3),p66=q(2/3);
+    return psData.map((r:any)=>{const v=Number(r[idx])||0;return v<=p33?"low":v<=p66?"medium":"high";});
+   };
+   const psNmDiffGroups=psGroups(8),psDiscDiffGroups=psGroups(13),psTotalPctGroups=psGroups(16);
    autoTable(doc,{
-    startY:24,head:[pHead],body:psBody,theme:"grid",tableWidth:400,margin:{left:10,right:10,bottom:15},
+    startY:24,head:[pHead],body:psBody,theme:"grid",tableWidth:277,margin:{left:10,right:10,bottom:15},
     styles:{font:"helvetica",fontSize:6.2,cellPadding:1.0,lineColor:grid,lineWidth:.25,halign:"center",valign:"middle",overflow:"linebreak"},
-    headStyles:{font:"helvetica",fontStyle:"bold",fontSize:5.7,fillColor:navy,textColor:255,cellPadding:2,minCellHeight:13},
+    headStyles:{font:"helvetica",fontStyle:"bold",fontSize:5.5,fillColor:navy,textColor:255,cellPadding:2,minCellHeight:15},
     columnStyles:Object.fromEntries(pWidths.map((w,i)=>[i,{cellWidth:w,halign:[2,3].includes(i)?"left":"center"}])),
     didParseCell:(data:any)=>{
      if(data.section==="body"){
@@ -202,8 +213,8 @@ export default function Page(){
     },
     didDrawPage:(data:any)=>{
      doc.setFont("helvetica","normal");doc.setFontSize(6.5);doc.setTextColor(80,88,98);
-     doc.text("Officer Wise Progress Report - Concerned PS Details",10,290);
-     doc.text(`Page ${data.pageNumber}`,410,290,{align:"right"});
+     doc.text("Officer Wise Progress Report - Concerned PS Details",10,412);
+     doc.text(`Page ${data.pageNumber}`,287,412,{align:"right"});
     }
    });
   });
