@@ -108,10 +108,15 @@ export default function Page(){
   ];
   const sub:any[]=[
    "TOTAL NO\nMAPPING\nNOTICES","NO MAPPING\nDISPOSED\nEARLIER","NO MAPPING\nDISPOSED\nLATEST","DIFFERENCE",
-   "% OF NO\nMAPPING\nNOTICES\nDISPOSED","NO MAPPING D\nOCUMENTS\nUPLOADED","% DOCUMENTS /\nTOTAL NO MAPPING\nNOTICES",
+   "% OF NO\nMAPPING\nNOTICES\nDISPOSED","NO MAPPING DOCUMENTS\nUPLOADED","% DOCUMENTS /\nTOTAL NO MAPPING\nNOTICES",
    "TOTAL DISCREPANCY\nNOTICES","DISCREPANCY\nDISPOSED\nEARLIER","DISCREPANCY\nDISPOSED\nLATEST","DIFFERENCE",
    "% OF DISCREPANCY\nNOTICES\nDISPOSED","BLO LETTER\nUPLOADED","% BLO LETTER /\nTOTAL DISCREPANCY\nNOTICES"
   ].map((content,i)=>({content,styles:{fillColor:(i<7?navy:brown) as [number,number,number],textColor:255}}));
+  sub.splice(7,0,{content:"",styles:{fillColor:[255,255,255],textColor:[255,255,255],lineWidth:0}});
+  sub.push(
+   {content:"TOTAL NOTICES\nDISPOSED",styles:{fillColor:navy,textColor:255}},
+   {content:"% OF TOTAL\nNOTICES DISPOSED",styles:{fillColor:navy,textColor:255}}
+  );
 
   const body=rows.map((r,rowIndex)=>rowValues(r,rowIndex));
   body.push([
@@ -123,8 +128,8 @@ export default function Page(){
   const widths=[7,29,13,14,14,14,12,16,14,16,3,14,14,14,12,16,13,16,14,15];
   autoTable(doc,{
    startY:34,head:[top,sub],body,theme:"grid",tableWidth:277,margin:{left:10,right:10,bottom:18},
-   styles:{font:"helvetica",fontSize:6.4,cellPadding:1.0,lineColor:grid,lineWidth:.25,textColor:[20,28,38] as [number,number,number],halign:"center",valign:"middle",overflow:"linebreak"},
-   headStyles:{font:"helvetica",fontStyle:"bold",fontSize:5.5,halign:"center",valign:"middle",cellPadding:2.2,minCellHeight:15},
+   styles:{font:"helvetica",fontSize:7.0,cellPadding:1.05,lineColor:grid,lineWidth:.25,textColor:[20,28,38] as [number,number,number],halign:"center",valign:"middle",overflow:"linebreak"},
+   headStyles:{font:"helvetica",fontStyle:"bold",fontSize:6.0,halign:"center",valign:"middle",cellPadding:2.2,minCellHeight:15},
    columnStyles:Object.fromEntries(widths.map((w,i)=>[i,{cellWidth:w,halign:i===1?"left":"center"}])),
    didParseCell:(data:any)=>{
     if(data.section==="head"){
@@ -146,7 +151,7 @@ export default function Page(){
     }
    },
    didDrawPage:(data:any)=>{
-    doc.setFont("helvetica","normal");doc.setFontSize(6.5);doc.setTextColor(80,88,98);
+    doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(80,88,98);
     doc.text("Officer Wise Progress Report - No Mapping & Discrepancy Notices",10,412);
     doc.text(`Page ${data.pageNumber}`,287,412,{align:"right"});
    }
@@ -154,13 +159,13 @@ export default function Page(){
 
   let y=((doc as any).lastAutoTable?.finalY||260)+6;
   if(y>395){doc.addPage();y=18;}
-  doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(40,48,58);doc.text("COLOUR CODE:",10,y);
+  doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(40,48,58);doc.text("COLOUR CODE:",10,y);
   let x=34;
   [["LOW (needs attention)","low"],["MEDIUM","medium"],["HIGH (good)","high"]].forEach(([label,k])=>{
    const c=color(k);doc.setFillColor(c[0],c[1],c[2]);doc.rect(x,y-4,27,4,"F");
    doc.setTextColor(40,48,58);doc.text(label,x+29,y);x+=78;
   });
-  doc.setFont("helvetica","normal");doc.setFontSize(6.2);
+  doc.setFont("helvetica","normal");doc.setFontSize(7);
   doc.text("Applied to Difference and percentage columns. Lowest third = red; highest third = green.",10,y+6);
   doc.text("Notes: Disposed means Approved / Disposed notices. % Disposed = Latest Disposed / Total Notices of that type. Difference = Latest - Earlier.",10,y+11);
   // Detailed PS-wise tables: one section for every officer, using that officer's concerned PS only.
@@ -198,21 +203,32 @@ export default function Page(){
    const psNmDiffGroups=psGroups(8),psDiscDiffGroups=psGroups(13),psTotalPctGroups=psGroups(16);
    autoTable(doc,{
     startY:24,head:[pHead],body:psBody,theme:"grid",tableWidth:277,margin:{left:10,right:10,bottom:15},
-    styles:{font:"helvetica",fontSize:6.2,cellPadding:1.0,lineColor:grid,lineWidth:.25,halign:"center",valign:"middle",overflow:"linebreak"},
-    headStyles:{font:"helvetica",fontStyle:"bold",fontSize:5.5,fillColor:navy,textColor:255,cellPadding:2,minCellHeight:15},
+    styles:{font:"helvetica",fontSize:7.0,cellPadding:1.05,lineColor:grid,lineWidth:.25,halign:"center",valign:"middle",overflow:"linebreak"},
+    headStyles:{font:"helvetica",fontStyle:"bold",fontSize:6.0,fillColor:navy,textColor:255,cellPadding:2.1,minCellHeight:15},
     columnStyles:Object.fromEntries(pWidths.map((w,i)=>[i,{cellWidth:w,halign:[2,3].includes(i)?"left":"center"}])),
     didParseCell:(data:any)=>{
      if(data.section==="body"){
       if(data.row.index===psBody.length-1){
        data.cell.styles.fillColor=[217,225,242];data.cell.styles.fontStyle="bold";
       }else{
-       if([8,13].includes(data.column.index) && Number(data.cell.raw)>0)data.cell.styles.fontStyle="bold";
-       if(data.column.index===16)data.cell.styles.fontStyle="bold";
+       const ri=data.row.index;
+       if(data.column.index===8){
+        data.cell.styles.fillColor=color(psNmDiffGroups[ri]||"medium");
+        data.cell.styles.fontStyle="bold";
+       }
+       if(data.column.index===13){
+        data.cell.styles.fillColor=color(psDiscDiffGroups[ri]||"medium");
+        data.cell.styles.fontStyle="bold";
+       }
+       if(data.column.index===16){
+        data.cell.styles.fillColor=color(psTotalPctGroups[ri]||"medium");
+        data.cell.styles.fontStyle="bold";
+       }
       }
      }
     },
     didDrawPage:(data:any)=>{
-     doc.setFont("helvetica","normal");doc.setFontSize(6.5);doc.setTextColor(80,88,98);
+     doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(80,88,98);
      doc.text("Officer Wise Progress Report - Concerned PS Details",10,412);
      doc.text(`Page ${data.pageNumber}`,287,412,{align:"right"});
     }
