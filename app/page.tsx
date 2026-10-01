@@ -1,5 +1,3 @@
-Process started with PID 47054 (shell: /bin/zsh)
-Initial output:
 "use client";
 
 import React,{useMemo,useState} from "react";
