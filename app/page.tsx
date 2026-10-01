@@ -166,7 +166,7 @@ export default function Page(){
         if(data.column.index===8||data.column.index===13)data.cell.styles.fillColor=[255,248,225];
       }
     });
-    detailY=(doc.lastAutoTable?.finalY||detailY+10)+7;
+    detailY=((doc as any).lastAutoTable?.finalY||detailY+10)+7;
   });
   const fy=(doc.lastAutoTable?.finalY||120)+10;
   const legendY=fy>270?(doc.addPage(),16):fy;
