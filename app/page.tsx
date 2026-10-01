@@ -1,3 +1,5 @@
+[Reading 191 lines from start (total: 191 lines, 0 remaining)]
+
 "use client";
 import React,{useMemo,useState} from "react";
 import * as XLSX from "xlsx";
@@ -71,49 +73,79 @@ export default function Page(){
  const pdf=()=>{
    if(!latest)return;
    const doc=new jsPDF({orientation:"landscape",unit:"mm",format:"a3"});
-   const isOfficer=report==="officer"; const rows:any[]=isOfficer?officerRows:psRows; const g:any=total;
+   const isOfficer=report==="officer";
+   const rows:any[]=isOfficer?officerRows:psRows;
+   const g:any=total;
    const title=isOfficer?"OFFICER WISE PROGRESS REPORT":"PS WISE PROGRESS REPORT";
    const headers=isOfficer?HEADER:PS_HEADER;
    const keyFor=(r:any,idx:number)=>isOfficer?cellValue(r,idx):cellValue(r,idx,true);
    const groups={nm:nmGroups,docs:docsPctGroups,disc:discGroups,letters:lettersPctGroups};
    const fill=(group:any,r:any)=>group.get(r.officer||r.psNo)==="low"?[248,180,180]:group.get(r.officer||r.psNo)==="medium"?[255,230,153]:[183,225,161];
-   doc.setFillColor(31,56,100);doc.rect(0,0,420,29,"F");doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(18);doc.text(title,210,10,{align:"center"});
-   doc.setFontSize(9);doc.setFont("helvetica","normal");doc.text("No Mapping & Discrepancy Notices - Earlier vs Latest Disposal Status",210,17,{align:"center"});
+
+   doc.setFillColor(31,56,100);doc.rect(0,0,420,29,"F");
+   doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(18);doc.text(title,210,10,{align:"center"});
+   doc.setFont("helvetica","normal");doc.setFontSize(9);doc.text("No Mapping & Discrepancy Notices - Earlier vs Latest Disposal Status",210,17,{align:"center"});
    doc.text(`Data as of ${latestTimestamp} | ${officerCount} Officers | ${psCount} Polling Stations`,210,23,{align:"center"});
-   const head1:any[]=[
-    {content:"S.No.",rowSpan:2},{content:isOfficer?"OFFICER NAME AND DESIGNATION":"PS NO. / OFFICER / BLO DETAILS",rowSpan:2},
-    ...(isOfficer?[{content:"TOTAL NOTICES (NO MAPPING + DISCREPANCY)",rowSpan:2}]:[{content:"TOTAL NOTICES",rowSpan:2}]),
-    {content:"NO MAPPING NOTICES",colSpan:isOfficer?6:6,styles:{fillColor:[31,56,100],textColor:255,halign:"center"}},
-    ...(isOfficer?[{content:"",rowSpan:2,styles:{fillColor:[255,255,255]}}]:[{content:"",rowSpan:2,styles:{fillColor:[255,255,255]}}]),
-    {content:"DISCREPANCY NOTICES",colSpan:6,styles:{fillColor:[131,60,11],textColor:255,halign:"center"}}
+
+   const baseCount=isOfficer?3:6;
+   const head1:any[]=[];
+   if(isOfficer){
+     head1.push({content:"S.No.",rowSpan:2},{content:"OFFICER NAME AND DESIGNATION",rowSpan:2},{content:"TOTAL NOTICES",rowSpan:2});
+   }else{
+     head1.push({content:"S.No.",rowSpan:2},{content:"PS NO.",rowSpan:2},{content:"OFFICER NAME AND DESIGNATION",rowSpan:2},{content:"BLO SUPERVISOR",rowSpan:2},{content:"BLO NAME",rowSpan:2},{content:"TOTAL NOTICES",rowSpan:2});
+   }
+   head1.push({content:"NO MAPPING NOTICES",colSpan:7,styles:{fillColor:[31,56,100],textColor:255,halign:"center",valign:"middle"}});
+   head1.push({content:"",rowSpan:2,styles:{fillColor:[255,255,255],textColor:[255,255,255]}});
+   head1.push({content:"DISCREPANCY NOTICES",colSpan:7,styles:{fillColor:[131,60,11],textColor:255,halign:"center",valign:"middle"}});
+
+   const sub=[
+     "TOTAL NO MAPPING NOTICES","NO MAPPING DISPOSED EARLIER","NO MAPPING DISPOSED LATEST","DIFFERENCE","% OF NO MAPPING NOTICES DISPOSED","NO MAPPING DOCUMENTS UPLOADED","% DOCUMENTS / TOTAL NO MAPPING NOTICES",
+     "TOTAL DISCREPANCY NOTICES","DISCREPANCY DISPOSED EARLIER","DISCREPANCY DISPOSED LATEST","DIFFERENCE","% OF DISCREPANCY NOTICES DISPOSED","BLO LETTER UPLOADED","% BLO LETTER / TOTAL DISCREPANCY NOTICES"
    ];
-   const sub=isOfficer?["TOTAL NO MAPPING NOTICES","NO MAPPING DISPOSED EARLIER","NO MAPPING DISPOSED LATEST","DIFFERENCE","% OF NO MAPPING NOTICES DISPOSED","NO MAPPING DOCUMENTS UPLOADED","TOTAL DISCREPANCY NOTICES","DISCREPANCY DISPOSED EARLIER","DISCREPANCY DISPOSED LATEST","DIFFERENCE","% OF DISCREPANCY NOTICES DISPOSED","BLO LETTER UPLOADED"]:["TOTAL NO MAPPING NOTICES","NO MAPPING DISPOSED EARLIER","NO MAPPING DISPOSED LATEST","DIFFERENCE","% OF NO MAPPING NOTICES DISPOSED","NO MAPPING DOCUMENTS UPLOADED","TOTAL DISCREPANCY NOTICES","DISCREPANCY DISPOSED EARLIER","DISCREPANCY DISPOSED LATEST","DIFFERENCE","% OF DISCREPANCY NOTICES DISPOSED","BLO LETTER UPLOADED","% BLO LETTER / TOTAL DISCREPANCY NOTICES"];
-   const head2=sub.map((x,i)=>({content:x,styles:{fillColor:i<6?[31,56,100]:[131,60,11],textColor:255,halign:"center"}}));
-   const body=rows.map((r:any)=>headers.map((_,i)=>keyFor(r,i))).map((r:any[],ri:number)=>r);
-   body.push(isOfficer?[ "","GRAND TOTAL",g.totalNotices,g.nmTotal,g.nmEarlier,g.nmLatest,g.nmDifference,g.nmPct+"%",g.nmDocs,g.nmDocsPct+"%","",g.dTotal,g.dEarlier,g.dLatest,g.dDifference,g.dPct+"%",g.dLetters,g.dLettersPct+"%"]:
-     ["","GRAND TOTAL", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]);
-   const grand=isOfficer?[ "","GRAND TOTAL",g.totalNotices,g.nmTotal,g.nmEarlier,g.nmLatest,g.nmDifference,g.nmPct+"%",g.nmDocs,g.nmDocsPct+"%","",g.dTotal,g.dEarlier,g.dLatest,g.dDifference,g.dPct+"%",g.dLetters,g.dLettersPct+"%"]:
-     ["","GRAND TOTAL","",g.totalNotices,g.nmTotal,g.nmEarlier,g.nmLatest,g.nmDifference,g.nmPct+"%",g.nmDocs,g.nmDocsPct+"%","",g.dTotal,g.dEarlier,g.dLatest,g.dDifference,g.dPct+"%",g.dLetters,g.dLettersPct+"%"];
-   body[body.length-1]=grand;
-   const widths=isOfficer?[9,45,20,20,21,21,18,22,20,24,4,20,21,21,18,22,20,24]:[9,13,35,25,23,19,19,21,21,18,21,20,22,4,20,21,21,18,22,20,24];
-   autoTable(doc,{startY:35,head:[head1,head2],body,theme:"grid",tableWidth:400,margin:{left:10,right:10,bottom:26},styles:{font:"helvetica",fontSize:isOfficer?8.5:7.5,cellPadding:1.5,lineColor:[184,192,204],lineWidth:.25,textColor:[20,28,38],halign:"center",valign:"middle",overflow:"linebreak"},columnStyles:Object.fromEntries(widths.map((w,i)=>[i,{cellWidth:w,halign:i===1&&!isOfficer?"left":i===1?"left":"center"}])),headStyles:{fontStyle:"bold",fontSize:8,textColor:[255,255,255],fillColor:[31,56,100],halign:"center",valign:"middle"},alternateRowStyles:{fillColor:[242,245,250]},didParseCell:(d:any)=>{
-      if(d.section==="head"&&d.row.index===1&&d.column.index>=isOfficer?0:0){}
-      if(d.section==="body"&&d.row.index===body.length-1){d.cell.styles.fillColor=[217,225,242];d.cell.styles.fontStyle="bold";}
-      if(d.section==="body"&&d.row.index<body.length-1){const r=rows[d.row.index];const idx=d.column.index;let c:any=null;
-        if(isOfficer){if(idx===6)c=groups.nm;if(idx===9)c=groups.docs;if(idx===14)c=groups.disc;if(idx===17)c=groups.letters;}
-        else {if(idx===9)c=groups.nm;if(idx===12)c=groups.docs;if(idx===17)c=groups.disc;if(idx===20)c=groups.letters;}
-        if(c)d.cell.styles.fillColor=fill(c,r);
-        if(isOfficer&&[4,12].includes(idx))d.cell.styles.fillColor=[255,248,225];
-        if(!isOfficer&&[7,15].includes(idx))d.cell.styles.fillColor=[255,248,225];
-        if((isOfficer&&[5,6,8,9,13,14,16,17].includes(idx))||(!isOfficer&&[8,9,11,12,16,17,19,20].includes(idx)))d.cell.styles.fontStyle="bold";
-      }
-    },didDrawPage:(d:any)=>{doc.setFontSize(7);doc.setTextColor(85,94,106);doc.text(`${isOfficer?"Officer":"PS"} Wise Progress Report - No Mapping & Discrepancy Notices`,10,290);doc.text(`Page ${d.pageNumber}`,410,290,{align:"right"});}
+   const head2=sub.map((x,i)=>({content:x,styles:{fillColor:i<7?[31,56,100]:[131,60,11],textColor:255,halign:"center",valign:"middle",fontStyle:"bold"}}));
+
+   const body=rows.map((r:any)=>headers.map((_,i)=>keyFor(r,i)));
+   const grand=isOfficer
+     ? ["","GRAND TOTAL",g.totalNotices,g.nmTotal,g.nmEarlier,g.nmLatest,g.nmDifference,g.nmPct+"%",g.nmDocs,g.nmDocsPct+"%","",g.dTotal,g.dEarlier,g.dLatest,g.dDifference,g.dPct+"%",g.dLetters,g.dLettersPct+"%"]
+     : ["","GRAND TOTAL","","","",g.totalNotices,g.nmTotal,g.nmEarlier,g.nmLatest,g.nmDifference,g.nmPct+"%",g.nmDocs,g.nmDocsPct+"%","",g.dTotal,g.dEarlier,g.dLatest,g.dDifference,g.dPct+"%",g.dLetters,g.dLettersPct+"%"];
+   body.push(grand);
+
+   const widths=isOfficer
+     ?[9,45,20,20,21,21,18,22,20,24,4,20,21,21,18,22,20,24]
+     :[9,13,35,25,23,19,19,21,21,18,21,20,22,4,20,21,21,18,22,20,24];
+
+   autoTable(doc,{
+     startY:35,
+     head:[head1,head2],
+     body,
+     theme:"grid",
+     tableWidth:400,
+     margin:{left:10,right:10,bottom:18},
+     styles:{font:"helvetica",fontSize:isOfficer?8.2:7.2,cellPadding:1.5,lineColor:[184,192,204],lineWidth:.25,textColor:[20,28,38],halign:"center",valign:"middle",overflow:"linebreak"},
+     columnStyles:Object.fromEntries(widths.map((w,i)=>[i,{cellWidth:w,halign:(i===1||(!isOfficer&&[2,3,4].includes(i)))?"left":"center"}])),
+     headStyles:{fontStyle:"bold",fontSize:7.5,textColor:[255,255,255],fillColor:[31,56,100],halign:"center",valign:"middle"},
+     alternateRowStyles:{fillColor:[242,245,250]},
+     didParseCell:(d:any)=>{
+       if(d.section==="body"&&d.row.index===body.length-1){d.cell.styles.fillColor=[217,225,242];d.cell.styles.fontStyle="bold";return;}
+       if(d.section!=="body")return;
+       const r=rows[d.row.index]; if(!r)return;
+       const idx=d.column.index; let c:any=null;
+       if(isOfficer){if(idx===6)c=groups.nm;if(idx===9)c=groups.docs;if(idx===14)c=groups.disc;if(idx===17)c=groups.letters;}
+       else {if(idx===9)c=groups.nm;if(idx===12)c=groups.docs;if(idx===17)c=groups.disc;if(idx===20)c=groups.letters;}
+       if(c)d.cell.styles.fillColor=fill(c,r);
+       if((isOfficer&&[4,12].includes(idx))||(!isOfficer&&[7,15].includes(idx)))d.cell.styles.fillColor=[255,248,225];
+       if((isOfficer&&[5,6,8,9,13,14,16,17].includes(idx))||(!isOfficer&&[8,9,11,12,16,17,19,20].includes(idx)))d.cell.styles.fontStyle="bold";
+     },
+     didDrawPage:(d:any)=>{doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(85,94,106);doc.text(`${isOfficer?"Officer":"PS"} Wise Progress Report - No Mapping & Discrepancy Notices`,10,290);doc.text(`Page ${d.pageNumber}`,410,290,{align:"right"});}
    });
-   const y=(doc as any).lastAutoTable.finalY+7;
+
+   let y=(doc as any).lastAutoTable.finalY+7;
+   if(y>275){doc.addPage();y=18;}
    doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(40,48,58);doc.text("COLOUR CODE:",10,y);
-   const legend=[["LOW (needs attention)",[248,180,180]],["MEDIUM",[255,230,153]],["HIGH (good)",[183,225,161]]];let x=35;legend.forEach(([label,c]:any)=>{doc.setFillColor(c[0],c[1],c[2]);doc.rect(x,y-4,28,5,"F");doc.setTextColor(40,48,58);doc.text(label,x+31,y);x+=80;});
-   doc.setFont("helvetica","normal");doc.setFontSize(7);doc.text("Applied to Difference and upload-percentage columns. Lowest third = red; highest third = green.",10,y+6);/*,10,y+6);
-   */doc.text("Notes: Disposed means Approved / Disposed notices. % Disposed = Latest Disposed / Total Notices of that type. Difference = Latest - Earlier.",10,y+12);
+   const legend=[["LOW (needs attention)",[248,180,180]],["MEDIUM",[255,230,153]],["HIGH (good)",[183,225,161]]];
+   let x=35;legend.forEach(([label,c]:any)=>{doc.setFillColor(c[0],c[1],c[2]);doc.rect(x,y-4,28,5,"F");doc.setTextColor(40,48,58);doc.text(label,x+31,y);x+=80;});
+   doc.setFont("helvetica","normal");doc.setFontSize(7);doc.text("Applied to Difference and upload-percentage columns. Lowest third = red; highest third = green.",10,y+6);
+   doc.text("Notes: Disposed means Approved / Disposed notices. % Disposed = Latest Disposed / Total Notices of that type. Difference = Latest - Earlier.",10,y+12);
    doc.save(`${isOfficer?"Officer_Wise_Report":"PS_Wise_Report"}_${new Date().toISOString().slice(0,10)}.pdf`);
  };
 
@@ -159,3 +191,5 @@ export default function Page(){
 function K({label,value,tone}:{label:string;value:string;tone:string}){return <div className={"kpi "+tone}><span>{label}</span><b>{value}</b></div>}
 function Chart({title,rows,field,percent=false}:{title:string;rows:any[];field:string;percent?:boolean}){const max=Math.max(...rows.map(r=>Number(r[field])||0),1);return <div className="chart"><h3>{title}</h3><div>{rows.map(r=><div className="barrow" key={r.officer}><label>{r.officer}</label><div><i style={{width:`${Math.max(2,(Number(r[field])||0)/max*100)}%`}}></i></div><b>{percent?r[field]+"%":formatNumber(r[field])}</b></div>)}</div></div>}
 
+
+[executed on device: Akashs-MacBook-Air.local (4036675e-2011-40ea-be95-0a3a36abe389)]
