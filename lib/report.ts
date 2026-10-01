@@ -104,7 +104,7 @@ export function parseGrandTotal(rows:RawRow[]){
   return rows.find(r=>String(key(r,aliases.ps)).trim().toUpperCase()==="GRAND TOTAL")||null;
 }
 
-function totals(rows:any[]){
+type MetricTotals = { nmTotal:number; nmPending:number; nmDisposed:number; nmDocs:number; dTotal:number; dPending:number; dDisposed:number; dLetter:number; };\n\nfunction totals(rows:any[]):MetricTotals{
   return rows.reduce((a,r)=>{
     a.nmTotal+=r.nmTotal;a.nmPending+=r.nmPending;a.nmDisposed+=r.nmDisposed;a.nmDocs+=r.nmDocs;
     a.dTotal+=r.dTotal;a.dPending+=r.dPending;a.dDisposed+=r.dDisposed;a.dLetter+=r.dLetter;return a;
@@ -134,15 +134,15 @@ export function buildReports(latest:any[],earlier:any[]){
   const psNos=[...new Set([...latest.map(r=>r.psNo),...earlier.map(r=>r.psNo)])];
   const psRows:PSReportRow[]=psNos.map(psNo=>{
     const l=latestByPS.get(psNo); const e=earlierByPS.get(psNo);
-    const L=l||{nmTotal:0,nmDisposed:0,nmDocs:0,dTotal:0,dDisposed:0,dLetter:0,nmPending:0,dPending:0};
-    const E=e||{nmDisposed:0,dDisposed:0};
+    const L:any=l||{nmTotal:0,nmDisposed:0,nmDocs:0,dTotal:0,dDisposed:0,dLetter:0,nmPending:0,dPending:0};
+    const E:any=e||{nmDisposed:0,dDisposed:0};
     return {psNo,officer:l?.officer||e?.officer||"UNMAPPED",designation:l?.designation||e?.designation||"",supervisor:l?.supervisor||e?.supervisor||"",blo:l?.blo||e?.blo||"",totalNotices:L.nmTotal+L.dTotal,nmTotal:L.nmTotal,nmEarlier:E.nmDisposed,nmLatest:L.nmDisposed,nmDifference:L.nmDisposed-E.nmDisposed,nmPct:percentage(L.nmDisposed,L.nmTotal),nmDocs:L.nmDocs,nmDocsPct:percentage(L.nmDocs,L.nmTotal),dTotal:L.dTotal,dEarlier:E.dDisposed,dLatest:L.dDisposed,dDifference:L.dDisposed-E.dDisposed,dPct:percentage(L.dDisposed,L.dTotal),dLetters:L.dLetter,dLettersPct:percentage(L.dLetter,L.dTotal),psCount:1};
   }).sort((a,b)=>Number(a.psNo)-Number(b.psNo));
   return {officerRows,psRows};
 }
 
 export function grandOfficer(rows:OfficerReportRow[]){
-  const x=rows.reduce((a,r)=>{a.totalNotices+=r.totalNotices;a.nmTotal+=r.nmTotal;a.nmEarlier+=r.nmEarlier;a.nmLatest+=r.nmLatest;a.nmDifference+=r.nmDifference;a.nmDocs+=r.nmDocs;a.nmDocsPct+=0;a.dTotal+=r.dTotal;a.dEarlier+=r.dEarlier;a.dLatest+=r.dLatest;a.dDifference+=r.dDifference;a.dLetters+=r.dLetters;a.dLettersPct+=0;a.psCount+=r.psCount;return a;},{totalNotices:0,nmTotal:0,nmEarlier:0,nmLatest:0,nmDifference:0,nmDocs:0,nmDocsPct:0,dTotal:0,dEarlier:0,dLatest:0,dDifference:0,dLetters:0,dLettersPct:0,psCount:0});
+  const x=rows.reduce((a,r)=>{a.totalNotices+=r.totalNotices;a.nmTotal+=r.nmTotal;a.nmEarlier+=r.nmEarlier;a.nmLatest+=r.nmLatest;a.nmDifference+=r.nmDifference;a.nmDocs+=r.nmDocs;a.nmDocsPct+=0;a.dTotal+=r.dTotal;a.dEarlier+=r.dEarlier;a.dLatest+=r.dLatest;a.dDifference+=r.dDifference;a.dLetters+=r.dLetters;a.dLettersPct+=0;a.psCount+=r.psCount;return a;},{totalNotices:0,nmTotal:0,nmEarlier:0,nmLatest:0,nmDifference:0,nmDocs:0,nmDocsPct:0,dTotal:0,dEarlier:0,dLatest:0,dDifference:0,dLetters:0,dLettersPct:0,psCount:0} as {totalNotices:number;nmTotal:number;nmEarlier:number;nmLatest:number;nmDifference:number;nmDocs:number;nmDocsPct:number;dTotal:number;dEarlier:number;dLatest:number;dDifference:number;dLetters:number;dLettersPct:number;psCount:number});
   return {...x,nmPct:percentage(x.nmLatest,x.nmTotal),nmDocsPct:percentage(x.nmDocs,x.nmTotal),dPct:percentage(x.dLatest,x.dTotal),dLettersPct:percentage(x.dLetters,x.dTotal)};
 }
 
