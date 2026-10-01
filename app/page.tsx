@@ -73,6 +73,17 @@ export default function Page(){
  const sort=(key:keyof OfficerReportRow)=>{
   if(sortKey===key)setSortDir(v=>-v);else{setSortKey(key);setSortDir(-1);}
  };
+ const percentage=(a:number,b:number)=>b?Math.round((a/b)*1000)/10:0;
+
+ const buildOfficerPSRows=(officer:string)=>{
+  const L=(latest?.rows||[]).filter(r=>r.officer===officer).sort((a,b)=>String(a.psNo).localeCompare(String(b.psNo),undefined,{numeric:true}));
+  const E=new Map((earlier?.rows||[]).filter(r=>r.officer===officer).map(r=>[r.psNo,r]));
+  return L.map((r,i)=>{
+   const e=E.get(r.psNo);
+   const totalDisposed=r.nmDisposed+r.dDisposed;
+   return [i+1,r.psNo,r.blo,r.supervisor,r.nmTotal+r.dTotal,r.nmTotal,e?.nmDisposed||0,r.nmDisposed,r.nmDisposed-(e?.nmDisposed||0),r.nmDocs,r.dTotal,e?.dDisposed||0,r.dDisposed,r.dDisposed-(e?.dDisposed||0),r.dLetter,totalDisposed,percentage(totalDisposed,r.nmTotal+r.dTotal)+"%"];
+  });
+ };
 
  const pdf=()=>{
   if(!latest||!earlier)return;
