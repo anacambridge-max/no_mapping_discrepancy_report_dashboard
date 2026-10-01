@@ -104,8 +104,8 @@ export default function Page(){
    theme:"grid" as const,
    tableWidth:400,
    margin:{left:10,right:10},
-   styles:{font:"helvetica",fontSize:9.2,cellPadding:2.0,lineColor:grid,lineWidth:.3,textColor:[20,28,38] as [number,number,number],halign:"center" as const,valign:"middle" as const,overflow:"linebreak" as const},
-   headStyles:{font:"helvetica",fontStyle:"bold" as const,fontSize:8.2,halign:"center" as const,valign:"middle" as const,cellPadding:2.4,minCellHeight:14,fillColor:navy,textColor:255},
+   styles:{font:"helvetica",fontSize:7.0,cellPadding:1.0,lineColor:grid,lineWidth:.3,textColor:[20,28,38] as [number,number,number],halign:"center" as const,valign:"middle" as const,overflow:"linebreak" as const},
+   headStyles:{font:"helvetica",fontStyle:"bold" as const,fontSize:6.2,halign:"center" as const,valign:"middle" as const,cellPadding:1.1,minCellHeight:9,fillColor:navy,textColor:255},
   };
 
   const officerName=(r:OfficerReportRow)=>`${r.officer}\\n(${r.designation||"Officer"})`;
@@ -133,10 +133,10 @@ export default function Page(){
   drawTitle();
 
   autoTable(doc,{
-   ...baseStyles,startY:28,head:[nmHead,nmSub],body:nmBody,
+   ...baseStyles,startY:27,head:[nmHead,nmSub],body:nmBody,
    columnStyles:{
-    0:{cellWidth:10},1:{cellWidth:62,halign:"left"},2:{cellWidth:18},3:{cellWidth:23},
-    4:{cellWidth:30},5:{cellWidth:25},6:{cellWidth:25},7:{cellWidth:20},8:{cellWidth:24},9:{cellWidth:27},10:{cellWidth:65}
+    0:{cellWidth:8},1:{cellWidth:54,halign:"left"},2:{cellWidth:14},3:{cellWidth:20},
+    4:{cellWidth:28},5:{cellWidth:23},6:{cellWidth:23},7:{cellWidth:18},8:{cellWidth:22},9:{cellWidth:25},10:{cellWidth:55}
    },
    headStyles:{...baseStyles.headStyles,fillColor:navy},
    didParseCell:(data:any)=>{
@@ -152,14 +152,14 @@ export default function Page(){
 
   let y1=((doc as any).lastAutoTable?.finalY||120)+8;
   doc.setFillColor(...brown);doc.rect(10,y1-5,400,7,"F");
-  doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(9);
+  doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(7.5);
   doc.text("DISCREPANCY NOTICES & TOTAL DISPOSAL",210,y1,{align:"center"});
 
   autoTable(doc,{
    ...baseStyles,startY:y1+3,head:[discHead,discSub],body:discBody,
    columnStyles:{
-    0:{cellWidth:10},1:{cellWidth:62,halign:"left"},2:{cellWidth:18},
-    3:{cellWidth:30},4:{cellWidth:25},5:{cellWidth:25},6:{cellWidth:20},7:{cellWidth:24},8:{cellWidth:27},9:{cellWidth:38},
+    0:{cellWidth:8},1:{cellWidth:54,halign:"left"},2:{cellWidth:14},
+    3:{cellWidth:27},4:{cellWidth:22},5:{cellWidth:22},6:{cellWidth:18},7:{cellWidth:22},8:{cellWidth:24},9:{cellWidth:48},
     10:{cellWidth:42},11:{cellWidth:42},12:{cellWidth:45}
    },
    headStyles:{...baseStyles.headStyles,fillColor:brown},
@@ -175,7 +175,7 @@ export default function Page(){
    }
   });
 
-  const fy=Math.min(286,((doc as any).lastAutoTable?.finalY||280)+8);
+  const fy=Math.min(289,((doc as any).lastAutoTable?.finalY||280)+5);
   doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(40,48,58);
   doc.text("COLOUR CODE:",10,fy);
   let x=38;
@@ -186,9 +186,9 @@ export default function Page(){
   doc.setFont("helvetica","normal");doc.setFontSize(7);
   doc.text("Colour coding: Difference, upload percentages/counts and % Total Notices Disposed. Lowest third = red; highest third = green.",10,fy+6);
   doc.text("Notes: Pending No Mapping = Total No Mapping Notices - Latest No Mapping Disposed. Pending Discrepancy = Total Discrepancy Notices - Latest Discrepancy Disposed. Total Pending = both pending counts.",10,fy+11);
-  doc.setFontSize(7);doc.text("AC-34 MATIALA | SIR-2026 | OFFICER-WISE NOTICE DISPOSAL REPORT",10,294);
-  doc.text(`Data as of ${latest.timestamp} | ${rows.length} Officers | ${psCount} Polling Stations`,210,294,{align:"center"});
-  doc.text("Page 1",410,294,{align:"right"});
+  doc.setFontSize(7);doc.text("AC-34 MATIALA | SIR-2026 | OFFICER-WISE NOTICE DISPOSAL REPORT",10,296);
+  doc.text(`Data as of ${latest.timestamp} | ${rows.length} Officers | ${psCount} Polling Stations`,210,296,{align:"center"});
+  doc.text("Page 1",410,296,{align:"right"});
   doc.save(`Officer_Wise_Report_${new Date().toISOString().slice(0,10)}.pdf`);
  };
 
