@@ -112,9 +112,9 @@ export default function Page(){
 
   const nmHead=[
    {content:"S.No.",rowSpan:2},{content:"OFFICER NAME AND DESIGNATION",rowSpan:2},{content:"NO. OF PS",rowSpan:2},{content:"TOTAL\\nNOTICES",rowSpan:2},
-   {content:"NO MAPPING NOTICES",colSpan:8}
+   {content:"NO MAPPING NOTICES",colSpan:7}
   ];
-  const nmSub=["TOTAL NO MAPPING NOTICES","NM DISPOSED EARLIER","NM DISPOSED LATEST","DIFFERENCE","% NM DISPOSED","NM DOCS UPLOADED","PENDING NO MAPPING",""];
+  const nmSub=["TOTAL NO MAPPING NOTICES","NM DISPOSED EARLIER","NM DISPOSED LATEST","DIFFERENCE","% NM DISPOSED","NM DOCS UPLOADED","PENDING NO MAPPING"];
   const nmBody=rows.map((r,i)=>[
    i+1,officerName(r),r.psCount,r.nmTotal+r.dTotal,r.nmTotal,r.nmEarlier,r.nmLatest,r.nmDifference,r.nmPct+"%",r.nmDocs,r.nmPending
   ]);
@@ -122,9 +122,9 @@ export default function Page(){
 
   const discHead=[
    {content:"S.No.",rowSpan:2},{content:"OFFICER NAME AND DESIGNATION",rowSpan:2},{content:"NO. OF PS",rowSpan:2},
-   {content:"DISCREPANCY NOTICES",colSpan:8},{content:"TOTAL DISPOSAL",colSpan:3}
+   {content:"DISCREPANCY NOTICES",colSpan:7},{content:"TOTAL DISPOSAL",colSpan:3}
   ];
-  const discSub=["TOTAL DISCREPANCY NOTICES","DISC. DISP. EARLIER","DISC. DISP. LATEST","DIFFERENCE","% DISC. DISPOSED","BLO LETTER UPLOADED","PENDING DISCREPANCY","", "TOTAL NOTICES DISPOSED","% TOTAL NOTICES DISPOSED","TOTAL NOTICES PENDING"];
+  const discSub=["TOTAL DISCREPANCY NOTICES","DISC. DISP. EARLIER","DISC. DISP. LATEST","DIFFERENCE","% DISC. DISPOSED","BLO LETTER UPLOADED","PENDING DISCREPANCY","TOTAL NOTICES DISPOSED","% TOTAL NOTICES DISPOSED","TOTAL NOTICES PENDING"];
   const discBody=rows.map((r,i)=>[
    i+1,officerName(r),r.psCount,r.dTotal,r.dEarlier,r.dLatest,r.dDifference,r.dPct+"%",r.dLetters,r.dPending,r.totalDisposed,r.totalDisposedPct+"%",r.totalPending
   ]);
@@ -136,7 +136,7 @@ export default function Page(){
    ...baseStyles,startY:28,head:[nmHead,nmSub],body:nmBody,
    columnStyles:{
     0:{cellWidth:10},1:{cellWidth:62,halign:"left"},2:{cellWidth:18},3:{cellWidth:23},
-    4:{cellWidth:30},5:{cellWidth:25},6:{cellWidth:25},7:{cellWidth:20},8:{cellWidth:24},9:{cellWidth:27},10:{cellWidth:36}
+    4:{cellWidth:30},5:{cellWidth:25},6:{cellWidth:25},7:{cellWidth:20},8:{cellWidth:24},9:{cellWidth:27},10:{cellWidth:65}
    },
    headStyles:{...baseStyles.headStyles,fillColor:navy},
    didParseCell:(data:any)=>{
@@ -159,8 +159,8 @@ export default function Page(){
    ...baseStyles,startY:y1+3,head:[discHead,discSub],body:discBody,
    columnStyles:{
     0:{cellWidth:10},1:{cellWidth:62,halign:"left"},2:{cellWidth:18},
-    3:{cellWidth:30},4:{cellWidth:25},5:{cellWidth:25},6:{cellWidth:20},7:{cellWidth:24},8:{cellWidth:27},9:{cellWidth:36},
-    10:{cellWidth:30},11:{cellWidth:30},12:{cellWidth:32}
+    3:{cellWidth:30},4:{cellWidth:25},5:{cellWidth:25},6:{cellWidth:20},7:{cellWidth:24},8:{cellWidth:27},9:{cellWidth:38},
+    10:{cellWidth:42},11:{cellWidth:42},12:{cellWidth:45}
    },
    headStyles:{...baseStyles.headStyles,fillColor:brown},
    didParseCell:(data:any)=>{
