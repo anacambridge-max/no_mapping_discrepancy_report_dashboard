@@ -168,7 +168,7 @@ export default function Page(){
     });
     detailY=((doc as any).lastAutoTable?.finalY||detailY+10)+7;
   });
-  const fy=(doc.lastAutoTable?.finalY||120)+10;
+  const fy=((doc as any).lastAutoTable?.finalY||120)+10;
   const legendY=fy>270?(doc.addPage(),16):fy;
   doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(40,48,58);doc.text("COLOUR CODE:",10,legendY);doc.setFontSize(7);doc.setTextColor(40,48,58);doc.text("COLOUR CODE:",10,fy);
   let x=35;[["LOW","low"],["MEDIUM","medium"],["HIGH","high"]].forEach(([label,k])=>{const c=color(k);doc.setFillColor(c[0],c[1],c[2]);doc.rect(x,legendY-3.5,23,4,"F");doc.setTextColor(40,48,58);doc.text(label,x+25,legendY);x+=50;});
