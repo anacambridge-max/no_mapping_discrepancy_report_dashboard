@@ -165,7 +165,9 @@ export default function Page(){
     const p=Math.max(0,Math.min(1,(sorted.findIndex(v=>v>=value)+0.5)/sorted.length));
     return p<=1/3?"low":p>=2/3?"high":"medium";
   };
-  rows.forEach((officerRow,oi)=>{    // Each officer starts a distinct section. If a long table continues, the officer heading repeats.
+  rows.forEach((officerRow,oi)=>{
+    const psRows=buildOfficerPSRows(officerRow.officer);
+    // Each officer starts a distinct section. If a long table continues, the officer heading repeats.
     if(oi>0) doc.addPage();
     const officerTitle=(oi+1)+". "+officerRow.officer+" ("+(officerRow.designation||"Officer")+") — "+officerRow.psCount+" PS";
     detailPageHeader(officerTitle);
