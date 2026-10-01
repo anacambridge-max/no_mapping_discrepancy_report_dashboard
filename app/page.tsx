@@ -165,6 +165,13 @@ export default function Page(){
   rows.forEach((officerRow,officerIndex)=>{
    const psBody=buildOfficerPSRows(officerRow.officer);
    if(!psBody.length)return;
+   const psTotal=[
+    "","OFFICER TOTAL","", "",officerRow.totalNotices,
+    officerRow.nmTotal,officerRow.nmEarlier,officerRow.nmLatest,officerRow.nmDifference,officerRow.nmDocs,
+    officerRow.dTotal,officerRow.dEarlier,officerRow.dLatest,officerRow.dDifference,officerRow.dLetters,
+    officerRow.totalDisposed,officerRow.totalDisposedPct+"%"
+   ];
+   psBody.push(psTotal);
    doc.addPage();
    doc.setFillColor(...navy);doc.rect(0,0,420,13,"F");
    doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(10);
@@ -185,8 +192,12 @@ export default function Page(){
     columnStyles:Object.fromEntries(pWidths.map((w,i)=>[i,{cellWidth:w,halign:[2,3].includes(i)?"left":"center"}])),
     didParseCell:(data:any)=>{
      if(data.section==="body"){
-      if([8,13].includes(data.column.index) && Number(data.cell.raw)>0)data.cell.styles.fontStyle="bold";
-      if(data.column.index===16)data.cell.styles.fontStyle="bold";
+      if(data.row.index===psBody.length-1){
+       data.cell.styles.fillColor=[217,225,242];data.cell.styles.fontStyle="bold";
+      }else{
+       if([8,13].includes(data.column.index) && Number(data.cell.raw)>0)data.cell.styles.fontStyle="bold";
+       if(data.column.index===16)data.cell.styles.fontStyle="bold";
+      }
      }
     },
     didDrawPage:(data:any)=>{
@@ -209,7 +220,8 @@ export default function Page(){
    "% DOCUMENTS / TOTAL NO MAPPING NOTICES":r.nmDocsPct+"%","TOTAL DISCREPANCY NOTICES":r.dTotal,
    "DISCREPANCY DISPOSED EARLIER":r.dEarlier,"DISCREPANCY DISPOSED LATEST":r.dLatest,
    "DIFFERENCE (DISCREPANCY)":r.dDifference,"% OF DISCREPANCY NOTICES DISPOSED":r.dPct+"%",
-   "BLO LETTER UPLOADED":r.dLetters,"% BLO LETTER / TOTAL DISCREPANCY NOTICES":r.dLettersPct+"%"
+   "BLO LETTER UPLOADED":r.dLetters,"% BLO LETTER / TOTAL DISCREPANCY NOTICES":r.dLettersPct+"%",
+   "TOTAL NOTICES DISPOSED":r.totalDisposed,"% OF TOTAL NOTICES DISPOSED":r.totalDisposedPct+"%"
   }));
   const ws=XLSX.utils.json_to_sheet(data);
   ws["!freeze"]={xSplit:0,ySplit:1};
