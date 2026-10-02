@@ -96,6 +96,12 @@ export default function Page(){
 
  const pdf=()=>{
   if(!latest||!earlier)return;
+  // PDF-only colour groups: ONLY the three disposal percentage columns.
+  const pdfPctGroups={
+    nm:percentileGroups(pdfRows,r=>r.nmPct),
+    disc:percentileGroups(pdfRows,r=>r.dPct),
+    total:percentileGroups(pdfRows,r=>r.totalDisposedPct)
+  };
   const doc=new jsPDF({orientation:"landscape",unit:"mm",format:"a3"});
   const navy:[number,number,number]=[31,56,100],brown:[number,number,number]=[131,60,11],yellow:[number,number,number]=[255,248,225],grid:[number,number,number]=[184,192,204],grand:[number,number,number]=[217,225,242];
 
@@ -143,9 +149,9 @@ export default function Page(){
     if(data.row.index===pdfRows.length){data.cell.styles.fillColor=grand;data.cell.styles.fontStyle="bold";return;}
     const r=pdfRows[data.row.index];if(!r)return;
     if(data.column.index===4||data.column.index===12)data.cell.styles.fillColor=yellow;
-    if(data.column.index===7||data.column.index===8)data.cell.styles.fillColor=color(groups.nm.get(r.officer)||"medium");
-    if(data.column.index===15||data.column.index===16)data.cell.styles.fillColor=color(groups.disc.get(r.officer)||"medium");
-    if(data.column.index===21)data.cell.styles.fillColor=color(groups.totalDisposed.get(r.officer)||"medium");
+    if(data.column.index===8)data.cell.styles.fillColor=color(pdfPctGroups.nm.get(r.officer)||"medium");
+    if(data.column.index===16)data.cell.styles.fillColor=color(pdfPctGroups.disc.get(r.officer)||"medium");
+    if(data.column.index===21)data.cell.styles.fillColor=color(pdfPctGroups.total.get(r.officer)||"medium");
   }});
   // PS-wise detail section: all concerned PS are listed officer-by-officer in the same report.
   // IMPORTANT: Officer-wise summary table above is intentionally untouched.
