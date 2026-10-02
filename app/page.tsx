@@ -165,7 +165,7 @@ export default function Page(){
   let detailY=18;
   const psHead=["S.No.","PS No.","BLO NAME","BLO SUPERVISOR","TOTAL NOTICES","TOTAL NO MAPPING","NM DISP. LATEST","NM DIFF.","% NM DISPOSED","PENDING NO MAPPING CASES","NM DOCS UPLOADED","TOTAL DISCREPANCY","DISC. DISP. LATEST","DISC. DIFF.","% DISC. DISPOSED","PENDING DISCREPANCY CASES","BLO LETTER UPLOADED","TOTAL NOTICES DISPOSED","% TOTAL DISPOSED"];
   // Full A3 width: the PS-wise table uses the same visual scale and colour language as the Officer-wise table.
-  const psWidths=[8,13,34,34,21,22,22,18,17,28,22,23,22,18,17,28,23,24,20];
+  const psWidths=[7,12,34,34,20,20,20,16,15,24,20,20,20,16,15,24,20,22,16];
   const psGroup=[
     {content:"",colSpan:5,rowSpan:1},
     {content:"NO MAPPING NOTICES",colSpan:6},
