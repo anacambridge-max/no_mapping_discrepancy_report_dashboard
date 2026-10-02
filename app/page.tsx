@@ -125,33 +125,32 @@ export default function Page(){
 
   const head1=[
     {content:"S.No.",rowSpan:2},{content:"OFFICER NAME AND DESIGNATION",rowSpan:2},{content:"NO. OF PS",rowSpan:2},{content:"TOTAL\nNOTICES",rowSpan:2},
-    {content:"NO MAPPING NOTICES",colSpan:7},{content:"",rowSpan:2},
-    {content:"DISCREPANCY NOTICES",colSpan:7},{content:"",rowSpan:2},{content:"TOTAL DISPOSAL",colSpan:3}
+    {content:"NO MAPPING NOTICES",colSpan:6},{content:"",rowSpan:2},
+    {content:"DISCREPANCY NOTICES",colSpan:6},{content:"",rowSpan:2},{content:"TOTAL DISPOSAL",colSpan:3}
   ];
   const head2=[
-    "TOTAL NO MAPPING","NM DISP. EARLIER","NM DISP. LATEST","NM DIFF.","% NM DISPOSED","NM DOCS UPLOADED","PENDING NM",
-    "TOTAL DISCREPANCY","DISC. DISP. EARLIER","DISC. DISP. LATEST","DISC. DIFF.","% DISC. DISPOSED","BLO LETTER UPLOADED","PENDING DISC.",
+    "TOTAL NO MAPPING","NM DISP. LATEST","NM DIFF.","% NM DISPOSED","PENDING NO MAPPING CASES","NM DOCS UPLOADED",
+    "TOTAL DISCREPANCY","DISC. DISP. LATEST","DISC. DIFF.","% DISC. DISPOSED","PENDING DISCREPANCY CASES","BLO LETTER UPLOADED",
     "TOTAL NOTICES DISPOSED","% TOTAL DISPOSED","TOTAL NOTICES PENDING"
   ];
   const body=pdfRows.map((r,i)=>[
     i+1,r.officer+"\n("+(r.designation||"Officer")+")",r.psCount,r.totalNotices,
-    r.nmTotal,r.nmEarlier,r.nmLatest,r.nmDifference,r.nmPct+"%",r.nmDocs,r.nmPending,
-    "",r.dTotal,r.dEarlier,r.dLatest,r.dDifference,r.dPct+"%",r.dLetters,r.dPending,
+    r.nmTotal,r.nmLatest,r.nmDifference,r.nmPct+"%",r.nmPending,r.nmDocs,
+    "",r.dTotal,r.dLatest,r.dDifference,r.dPct+"%",r.dPending,r.dLetters,
     "",r.totalDisposed,r.totalDisposedPct+"%",r.totalPending
   ]);
-  body.push(["","GRAND TOTAL - AC-34 MATIALA",psCount,total.totalNotices,total.nmTotal,total.nmEarlier,total.nmLatest,total.nmDifference,total.nmPct+"%",total.nmDocs,total.nmPending,"",total.dTotal,total.dEarlier,total.dLatest,total.dDifference,total.dPct+"%",total.dLetters,total.dPending,"",total.totalDisposed,total.totalDisposedPct+"%",total.totalPending]);
+  body.push(["","GRAND TOTAL - AC-34 MATIALA",psCount,total.totalNotices,total.nmTotal,total.nmLatest,total.nmDifference,total.nmPct+"%",total.nmPending,total.nmDocs,"",total.dTotal,total.dLatest,total.dDifference,total.dPct+"%",total.dPending,total.dLetters,"",total.totalDisposed,total.totalDisposedPct+"%",total.totalPending]);
 
-  const widths=[6,43,9.5,16,20,16,16,14,16,19,17,3,20,17,17,14,16,20,17,3,20,18,21];
+  const widths=[6,43,9.5,16,20,16,14,16,36.5,19,3,20,17,14,16,36.5,20,3,20,18,21];
   const base={theme:"grid" as const,tableWidth:385,margin:{left:17.5,right:17.5,top:0,bottom:0},styles:{font:"helvetica",fontStyle:"bold" as const,fontSize:9.0,cellPadding:1.0,lineColor:grid,lineWidth:.25,textColor:[20,28,38] as [number,number,number],halign:"center" as const,valign:"middle" as const,overflow:"linebreak" as const},headStyles:{font:"helvetica",fontStyle:"bold" as const,fontSize:7.8,cellPadding:1.0,minCellHeight:11.5,halign:"center" as const,valign:"middle" as const,textColor:255}};
   autoTable(doc,{...base,startY:49,head:[head1,head2],body,columnStyles:Object.fromEntries(widths.map((w,i)=>[i,{cellWidth:w,halign:i===1?"left":"center"}])),didParseCell:(data:any)=>{
-    if(data.section==="head"){data.cell.styles.fillColor=data.column.index>=12&&data.column.index<=18?brown:navy;if(data.column.index===11||data.column.index===19){data.cell.styles.fillColor=[255,255,255];data.cell.styles.lineWidth=0;}return;}
+    if(data.section==="head"){data.cell.styles.fillColor=data.column.index>=11&&data.column.index<=16?brown:navy;if(data.column.index===10||data.column.index===17){data.cell.styles.fillColor=[255,255,255];data.cell.styles.lineWidth=0;}return;}
     if(data.section!=="body")return;
     if(data.row.index===pdfRows.length){data.cell.styles.fillColor=grand;data.cell.styles.fontStyle="bold";return;}
     const r=pdfRows[data.row.index];if(!r)return;
-    if(data.column.index===4||data.column.index===12)data.cell.styles.fillColor=yellow;
-    if(data.column.index===8)data.cell.styles.fillColor=color(pdfPctGroups.nm.get(r.officer)||"medium");
-    if(data.column.index===16)data.cell.styles.fillColor=color(pdfPctGroups.disc.get(r.officer)||"medium");
-    if(data.column.index===21)data.cell.styles.fillColor=color(pdfPctGroups.total.get(r.officer)||"medium");
+    if(data.column.index===7)data.cell.styles.fillColor=color(pdfPctGroups.nm.get(r.officer)||"medium");
+    if(data.column.index===14)data.cell.styles.fillColor=color(pdfPctGroups.disc.get(r.officer)||"medium");
+    if(data.column.index===19)data.cell.styles.fillColor=color(pdfPctGroups.total.get(r.officer)||"medium");
   }});
   // PS-wise detail section: all concerned PS are listed officer-by-officer in the same report.
   // IMPORTANT: Officer-wise summary table above is intentionally untouched.
@@ -227,7 +226,7 @@ export default function Page(){
   const legendY=(doc.internal.pages.length-1)>1 && fy>pageHeight-24?18:fy;
   doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(40,48,58);doc.text("COLOUR CODE:",10,legendY);
   let x=35;[["LOW","low"],["MEDIUM","medium"],["HIGH","high"]].forEach(([label,k])=>{const c=color(k);doc.setFillColor(c[0],c[1],c[2]);doc.rect(x,legendY-3.5,23,4,"F");doc.setTextColor(40,48,58);doc.text(label,x+25,legendY);x+=50;});
-  doc.setFont("helvetica","normal");doc.setFontSize(6.5);doc.text("Colour coding applies to Difference and percentage columns. Lowest third = red; highest third = green.",185,legendY);
+  doc.setFont("helvetica","normal");doc.setFontSize(6.5);doc.text("Colour coding applies only to the three disposal percentage columns. Lowest third = red; highest third = green.",185,legendY);
   doc.text("Pending NM = Total No Mapping Notices - Latest NM Disposed | Pending Disc. = Total Discrepancy Notices - Latest Disposed | Total Pending = Pending NM + Pending Disc.",10,legendY+7);
   const pageCount=doc.internal.pages.length-1;
   for(let pno=2;pno<=pageCount;pno++){
