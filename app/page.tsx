@@ -64,6 +64,13 @@ export default function Page(){
   if(sortKey==="officer"||sortKey==="designation") return String(a[sortKey]).localeCompare(String(b[sortKey]))*sortDir;
   return ((Number(a[sortKey])||0)-(Number(b[sortKey])||0))*sortDir;
  }),[reports,sortKey,sortDir]);
+ const pdfRows=useMemo(()=>[...reports].sort((a:any,b:any)=>{
+  const isAnuja=(r:any)=>/anuja\\s+trivedi/i.test(String(r.officer||""));
+  const ap=isAnuja(a),bp=isAnuja(b);
+  if(ap&&!bp)return -1;
+  if(!ap&&bp)return 1;
+  return String(a.officer||"").localeCompare(String(b.officer||""),undefined,{sensitivity:"base",numeric:false});
+ }),[reports]);
  const total=grandOfficer(rows);
  const psCount=new Set((latest?.rows||[]).map(r=>r.psNo)).size;
  const groups={
@@ -98,7 +105,7 @@ export default function Page(){
   doc.setFontSize(14);doc.text("SIR-2026: NOTICE DISPOSAL REPORT",210,12,{align:"center"});
   doc.setFontSize(8);doc.text("NO MAPPING & DISCREPANCY NOTICES - OFFICER-WISE (AERO-WISE)",210,16,{align:"center"});
   doc.setTextColor(55,65,80);doc.setFontSize(7.5);
-  doc.text("Data as of "+latest.timestamp+" | "+rows.length+" Officers | "+psCount+" Polling Stations",210,23,{align:"center"});
+  doc.text("Data as of "+latest.timestamp+" | "+pdfRows.length+" Officers | "+psCount+" Polling Stations",210,23,{align:"center"});
 
   const cards:Array<[string,string,[number,number,number]]>=[
     [String(psCount),"TOTAL PS",navy],[formatNumber(total.totalNotices),"TOTAL NOTICES",navy],
@@ -120,7 +127,7 @@ export default function Page(){
     "TOTAL DISCREPANCY","DISC. DISP. EARLIER","DISC. DISP. LATEST","DISC. DIFF.","% DISC. DISPOSED","BLO LETTER UPLOADED","PENDING DISC.",
     "TOTAL NOTICES DISPOSED","% TOTAL DISPOSED","TOTAL NOTICES PENDING"
   ];
-  const body=rows.map((r,i)=>[
+  const body=pdfRows.map((r,i)=>[
     i+1,r.officer+"\n("+(r.designation||"Officer")+")",r.psCount,r.totalNotices,
     r.nmTotal,r.nmEarlier,r.nmLatest,r.nmDifference,r.nmPct+"%",r.nmDocs,r.nmPending,
     "",r.dTotal,r.dEarlier,r.dLatest,r.dDifference,r.dPct+"%",r.dLetters,r.dPending,
@@ -133,8 +140,8 @@ export default function Page(){
   autoTable(doc,{...base,startY:49,head:[head1,head2],body,columnStyles:Object.fromEntries(widths.map((w,i)=>[i,{cellWidth:w,halign:i===1?"left":"center"}])),didParseCell:(data:any)=>{
     if(data.section==="head"){data.cell.styles.fillColor=data.column.index>=12&&data.column.index<=18?brown:navy;if(data.column.index===11||data.column.index===19){data.cell.styles.fillColor=[255,255,255];data.cell.styles.lineWidth=0;}return;}
     if(data.section!=="body")return;
-    if(data.row.index===rows.length){data.cell.styles.fillColor=grand;data.cell.styles.fontStyle="bold";return;}
-    const r=rows[data.row.index];if(!r)return;
+    if(data.row.index===pdfRows.length){data.cell.styles.fillColor=grand;data.cell.styles.fontStyle="bold";return;}
+    const r=pdfRows[data.row.index];if(!r)return;
     if(data.column.index===4||data.column.index===12)data.cell.styles.fillColor=yellow;
     if(data.column.index===7||data.column.index===8)data.cell.styles.fillColor=color(groups.nm.get(r.officer)||"medium");
     if(data.column.index===15||data.column.index===16)data.cell.styles.fillColor=color(groups.disc.get(r.officer)||"medium");
@@ -158,14 +165,14 @@ export default function Page(){
     {content:"DISCREPANCY NOTICES",colSpan:5},
     {content:"TOTAL DISPOSAL",colSpan:2}
   ];
-  const allPS=rows.flatMap(r=>buildOfficerPSRows(r.officer));
+  const allPS=pdfRows.flatMap(r=>buildOfficerPSRows(r.officer));
   const psBand=(value:number,values:number[])=>{
     if(!values.length)return "medium";
     const sorted=[...values].sort((a,b)=>a-b);
     const p=Math.max(0,Math.min(1,(sorted.findIndex(v=>v>=value)+0.5)/sorted.length));
     return p<=1/3?"low":p>=2/3?"high":"medium";
   };
-  rows.forEach((officerRow,oi)=>{
+  pdfRows.forEach((officerRow,oi)=>{
     const psRows=buildOfficerPSRows(officerRow.officer);
     // Each officer starts a distinct section. If a long table continues, the officer heading repeats.
     if(oi>0) doc.addPage();
