@@ -90,7 +90,9 @@ export default function Page(){
   return L.map((r,i)=>{
    const e=E.get(r.psNo);
    const totalDisposed=r.nmDisposed+r.dDisposed;
-   return [i+1,r.psNo,r.blo,r.supervisor,r.nmTotal+r.dTotal,r.nmTotal,e?.nmDisposed||0,r.nmDisposed,r.nmDisposed-(e?.nmDisposed||0),r.nmDocs,r.dTotal,e?.dDisposed||0,r.dDisposed,r.dDisposed-(e?.dDisposed||0),r.dLetter,totalDisposed,percentage(totalDisposed,r.nmTotal+r.dTotal)+"%"];
+   const nmPending=r.nmTotal-r.nmDisposed;
+   const dPending=r.dTotal-r.dDisposed;
+   return [i+1,r.psNo,r.blo,r.supervisor,r.nmTotal+r.dTotal,r.nmTotal,r.nmDisposed,r.nmDisposed-(e?.nmDisposed||0),percentage(r.nmDisposed,r.nmTotal)+"%",nmPending,r.nmDocs,r.dTotal,r.dDisposed,r.dDisposed-(e?.dDisposed||0),percentage(r.dDisposed,r.dTotal)+"%",dPending,r.dLetter,totalDisposed,percentage(totalDisposed,r.nmTotal+r.dTotal)+"%"];
   });
  };
 
@@ -161,13 +163,13 @@ export default function Page(){
     doc.text(title,210,8.2,{align:"center"});
   };
   let detailY=18;
-  const psHead=["S.No.","PS No.","BLO NAME","BLO SUPERVISOR","TOTAL NOTICES","TOTAL NO MAPPING","NM DISP. EARLIER","NM DISP. LATEST","NM DIFF.","NM DOCS UPLOADED","TOTAL DISCREPANCY","DISC. DISP. EARLIER","DISC. DISP. LATEST","DISC. DIFF.","BLO LETTER UPLOADED","TOTAL NOTICES DISPOSED","% TOTAL DISPOSED"];
+  const psHead=["S.No.","PS No.","BLO NAME","BLO SUPERVISOR","TOTAL NOTICES","TOTAL NO MAPPING","NM DISP. LATEST","NM DIFF.","% NM DISPOSED","PENDING NO MAPPING CASES","NM DOCS UPLOADED","TOTAL DISCREPANCY","DISC. DISP. LATEST","DISC. DIFF.","% DISC. DISPOSED","PENDING DISCREPANCY CASES","BLO LETTER UPLOADED","TOTAL NOTICES DISPOSED","% TOTAL DISPOSED"];
   // Full A3 width: the PS-wise table uses the same visual scale and colour language as the Officer-wise table.
-  const psWidths=[8,13,37,37,21,22,22,22,18,25,23,22,22,18,25,26,24];
+  const psWidths=[8,13,34,34,21,22,22,18,17,28,22,23,22,18,17,28,23,24,20];
   const psGroup=[
     {content:"",colSpan:5,rowSpan:1},
-    {content:"NO MAPPING NOTICES",colSpan:5},
-    {content:"DISCREPANCY NOTICES",colSpan:5},
+    {content:"NO MAPPING NOTICES",colSpan:6},
+    {content:"DISCREPANCY NOTICES",colSpan:6},
     {content:"TOTAL DISPOSAL",colSpan:2}
   ];
   const allPS=pdfRows.flatMap(r=>buildOfficerPSRows(r.officer));
@@ -196,25 +198,24 @@ export default function Page(){
       },
       didParseCell:(data:any)=>{
         if(data.section==="head"){
-          data.cell.styles.fillColor=(data.row.index===0&&data.column.index>=5&&data.column.index<=9)||(data.row.index===1&&data.column.index>=5&&data.column.index<=9)?navy:
-            (data.row.index===0&&data.column.index>=10&&data.column.index<=14)||(data.row.index===1&&data.column.index>=10&&data.column.index<=14)?brown:navy;
+          data.cell.styles.fillColor=(data.row.index===0&&data.column.index>=5&&data.column.index<=10)||(data.row.index===1&&data.column.index>=5&&data.column.index<=10)?navy:
+            (data.row.index===0&&data.column.index>=11&&data.column.index<=16)||(data.row.index===1&&data.column.index>=11&&data.column.index<=16)?brown:navy;
           return;
         }
         if(data.section!=="body")return;
         const p=psRows[data.row.index] as any[]|undefined;
         if(!p)return;
-        if(data.column.index===5||data.column.index===10)data.cell.styles.fillColor=yellow;
         if(data.column.index===8){
-          const vals=allPS.map(x=>Number(x[8])||0);
-          const c=color(psBand(Number(p[8])||0,vals));data.cell.styles.fillColor=c;
+          const vals=allPS.map(x=>parseFloat(String(x[8]))||0);
+          data.cell.styles.fillColor=color(psBand(parseFloat(String(p[8]))||0,vals));
         }
-        if(data.column.index===13){
-          const vals=allPS.map(x=>Number(x[13])||0);
-          const c=color(psBand(Number(p[13])||0,vals));data.cell.styles.fillColor=c;
+        if(data.column.index===14){
+          const vals=allPS.map(x=>parseFloat(String(x[14]))||0);
+          data.cell.styles.fillColor=color(psBand(parseFloat(String(p[14]))||0,vals));
         }
-        if(data.column.index===16){
-          const vals=allPS.map(x=>parseFloat(String(x[16]))||0);
-          const c=color(psBand(parseFloat(String(p[16]))||0,vals));data.cell.styles.fillColor=c;
+        if(data.column.index===18){
+          const vals=allPS.map(x=>parseFloat(String(x[18]))||0);
+          data.cell.styles.fillColor=color(psBand(parseFloat(String(p[18]))||0,vals));
         }
       }
     });
