@@ -194,11 +194,12 @@ export default function Page(){
     {content:"TOTAL DISPOSAL",colSpan:2}
   ];
   const allPS=pdfRows.flatMap(r=>buildOfficerPSRows(r.officer));
-  const psBand=(value:number,values:number[])=>{
-    if(!values.length)return "medium";
-    const sorted=[...values].sort((a,b)=>a-b);
-    const p=Math.max(0,Math.min(1,(sorted.findIndex(v=>v>=value)+0.5)/sorted.length));
-    return p<=1/3?"low":p>=2/3?"high":"medium";
+  const psBand=(value:number)=>{
+    return value<20?"darkRed":
+      value<30?"lightRed":
+      value<40?"orange":
+      value<50?"amber":
+      value<60?"yellow":"green";
   };
   pdfRows.forEach((officerRow,oi)=>{
     const psRows=buildOfficerPSRows(officerRow.officer);
@@ -227,16 +228,13 @@ export default function Page(){
         const p=psRows[data.row.index] as any[]|undefined;
         if(!p)return;
         if(data.column.index===8){
-          const vals=allPS.map(x=>parseFloat(String(x[8]))||0);
-          data.cell.styles.fillColor=color(psBand(parseFloat(String(p[8]))||0,vals));
+          data.cell.styles.fillColor=color(psBand(parseFloat(String(p[8]))||0));
         }
         if(data.column.index===14){
-          const vals=allPS.map(x=>parseFloat(String(x[14]))||0);
-          data.cell.styles.fillColor=color(psBand(parseFloat(String(p[14]))||0,vals));
+          data.cell.styles.fillColor=color(psBand(parseFloat(String(p[14]))||0));
         }
         if(data.column.index===18){
-          const vals=allPS.map(x=>parseFloat(String(x[18]))||0);
-          data.cell.styles.fillColor=color(psBand(parseFloat(String(p[18]))||0,vals));
+          data.cell.styles.fillColor=color(psBand(parseFloat(String(p[18]))||0));
         }
       }
     });
