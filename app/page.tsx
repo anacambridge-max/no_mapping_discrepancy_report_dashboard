@@ -26,7 +26,9 @@ function rowValues(r:OfficerReportRow,rowIndex:number){
 
 const excelScaleColor=(value:number,min:number,mid:number,max:number):[number,number,number]=>{
   const v=Math.max(min,Math.min(max,value));
-  const red:[number,number,number]=[248,105,107], yellow:[number,number,number]=[255,235,132], green:[number,number,number]=[99,190,123];
+  const red: [number,number,number] = [248,105,107];
+  const yellow: [number,number,number] = [255,235,132];
+  const green: [number,number,number] = [99,190,123];
   const lerp=(a:number[],b:number[],t:number):[number,number,number]=>
     [0,1,2].map(i=>Math.round(a[i]+(b[i]-a[i])*t)) as [number,number,number];
   if(max===min)return yellow;
