@@ -24,7 +24,14 @@ function rowValues(r:OfficerReportRow,rowIndex:number){
  ];
 }
 
-const color=(kind:string):[number,number,number]=>kind==="low"?[248,180,180]:kind==="medium"?[255,230,153]:[183,225,161];
+const color=(v:string)=>{
+  if(v==="darkRed")return [220,80,80];
+  if(v==="lightRed")return [248,180,180];
+  if(v==="orange")return [244,176,70];
+  if(v==="amber")return [255,205,80];
+  if(v==="yellow")return [255,235,120];
+  return [183,225,161];
+};
 
 export default function Page(){
  const [earlier,setEarlier]=useState<ParsedReport|null>(null);
@@ -103,7 +110,13 @@ export default function Page(){
     const out=new Map<string,string>();
     rows.forEach(r=>{
       const v=get(r);
-      out.set(r.officer,v>=50?"high":v>=25?"medium":"low");
+      out.set(r.officer,
+        v<20?"darkRed":
+        v<30?"lightRed":
+        v<40?"orange":
+        v<50?"amber":
+        v<60?"yellow":"green"
+      );
     });
     return out;
   };
