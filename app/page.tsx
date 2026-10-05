@@ -24,13 +24,16 @@ function rowValues(r:OfficerReportRow,rowIndex:number){
  ];
 }
 
-const color=(v:string)=>{
-  if(v==="darkRed")return [220,80,80];
-  if(v==="lightRed")return [248,180,180];
-  if(v==="orange")return [244,176,70];
-  if(v==="amber")return [255,205,80];
-  if(v==="yellow")return [255,235,120];
-  return [183,225,161];
+const excelScaleColor=(value:number):[number,number,number]=>{
+  const v=Math.max(0,Math.min(100,value));
+  const red=[248,105,107], yellow=[255,235,132], green=[99,190,123];
+  const lerp=(a:number[],b:number[],t:number):[number,number,number]=>
+    [0,1,2].map(i=>Math.round(a[i]+(b[i]-a[i])*t)) as [number,number,number];
+  return v<=50?lerp(red,yellow,v/50):lerp(yellow,green,(v-50)/50);
+};
+const color=(v:any):[number,number,number]=>{
+  if(Array.isArray(v))return v as [number,number,number];
+  return excelScaleColor(Number(v)||0);
 };
 
 export default function Page(){
@@ -107,17 +110,8 @@ export default function Page(){
   if(!latest||!earlier)return;
   // PDF-only colour groups: ONLY the three disposal percentage columns.
   const fixedPctGroup=(rows:any[],get:(r:any)=>number)=>{
-    const out=new Map<string,string>();
-    rows.forEach(r=>{
-      const v=get(r);
-      out.set(r.officer,
-        v<20?"darkRed":
-        v<30?"lightRed":
-        v<40?"orange":
-        v<50?"amber":
-        v<60?"yellow":"green"
-      );
-    });
+    const out=new Map<string,[number,number,number]>();
+    rows.forEach(r=>out.set(r.officer,excelScaleColor(get(r))));
     return out;
   };
   const pdfPctGroups={
@@ -194,13 +188,7 @@ export default function Page(){
     {content:"TOTAL DISPOSAL",colSpan:2}
   ];
   const allPS=pdfRows.flatMap(r=>buildOfficerPSRows(r.officer));
-  const psBand=(value:number)=>{
-    return value<20?"darkRed":
-      value<30?"lightRed":
-      value<40?"orange":
-      value<50?"amber":
-      value<60?"yellow":"green";
-  };
+  const psBand=(value:number)=>excelScaleColor(value);
   pdfRows.forEach((officerRow,oi)=>{
     const psRows=buildOfficerPSRows(officerRow.officer);
     // Each officer starts a distinct section. If a long table continues, the officer heading repeats.
