@@ -99,10 +99,18 @@ export default function Page(){
  const pdf=()=>{
   if(!latest||!earlier)return;
   // PDF-only colour groups: ONLY the three disposal percentage columns.
+  const fixedPctGroup=(rows:any[],get:(r:any)=>number)=>{
+    const out=new Map<string,string>();
+    rows.forEach(r=>{
+      const v=get(r);
+      out.set(r.officer,v>=50?"high":v>=25?"medium":"low");
+    });
+    return out;
+  };
   const pdfPctGroups={
-    nm:percentileGroups(pdfRows,r=>r.nmPct),
-    disc:percentileGroups(pdfRows,r=>r.dPct),
-    total:percentileGroups(pdfRows,r=>r.totalDisposedPct)
+    nm:fixedPctGroup(pdfRows,r=>r.nmPct),
+    disc:fixedPctGroup(pdfRows,r=>r.dPct),
+    total:fixedPctGroup(pdfRows,r=>r.totalDisposedPct)
   };
   const doc=new jsPDF({orientation:"landscape",unit:"mm",format:"a3"});
   const navy:[number,number,number]=[31,56,100],brown:[number,number,number]=[131,60,11],yellow:[number,number,number]=[255,248,225],grid:[number,number,number]=[184,192,204],grand:[number,number,number]=[217,225,242];
