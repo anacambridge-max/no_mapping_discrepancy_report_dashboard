@@ -1,3 +1,5 @@
+import {PS_MAPPING_GROUPS} from "./psMapping";
+
 export type RawRow = Record<string, any>;
 
 export type NormalizedRow = {
@@ -79,18 +81,28 @@ export function validateColumns(rows:RawRow[]){
   return REQUIRED_COLUMNS.filter(required=>!keys.some(k=>norm(k)===norm(required)));
 }
 
+const NEW_PS_MAPPING:Record<string,{officer:string;designation:string;supervisor:string;blo:string}>={};
+for(const group of PS_MAPPING_GROUPS){
+  for(const [ps,blo,supervisor] of group.rows){
+    NEW_PS_MAPPING[String(ps)]={officer:group.officer,designation:group.designation,supervisor,blo};
+  }
+}
+
 export function normalizeRows(rows:RawRow[]):NormalizedRow[]{
   return rows
     .filter(r=>{
       const ps=String(key(r,aliases.ps)).trim();
       return ps!=="" && ps.toUpperCase()!=="GRAND TOTAL";
     })
-    .map(r=>({
-      psNo:String(key(r,aliases.ps)).trim(),
-      officer:String(key(r,aliases.officer)).trim()||"UNMAPPED",
-      designation:String(key(r,aliases.designation)).trim(),
-      supervisor:String(key(r,aliases.supervisor)).trim(),
-      blo:String(key(r,aliases.blo)).trim(),
+    .map(r=>{
+      const psNo=String(key(r,aliases.ps)).trim();
+      const mapped=NEW_PS_MAPPING[psNo];
+      return {
+      psNo,
+      officer:mapped?.officer||String(key(r,aliases.officer)).trim()||"UNMAPPED",
+      designation:mapped?.designation||String(key(r,aliases.designation)).trim(),
+      supervisor:mapped?.supervisor||String(key(r,aliases.supervisor)).trim(),
+      blo:mapped?.blo||String(key(r,aliases.blo)).trim(),
       nmTotal:n(key(r,aliases.nmTotal)),
       nmPending:n(key(r,aliases.nmPending)),
       nmDisposed:n(key(r,aliases.nmDisposed)),
@@ -99,7 +111,8 @@ export function normalizeRows(rows:RawRow[]):NormalizedRow[]{
       dPending:n(key(r,aliases.dPending)),
       dDisposed:n(key(r,aliases.dDisposed)),
       dLetter:n(key(r,aliases.dLetter))
-    }));
+      };
+    });
 }
 
 export function parseGrandTotal(rows:RawRow[]){
