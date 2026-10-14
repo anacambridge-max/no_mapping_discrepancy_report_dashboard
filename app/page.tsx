@@ -114,19 +114,58 @@ export default function Page(){
  const percentage=(a:number,b:number)=>b?Math.round((a/b)*1000)/10:0;
 
  const buildOfficerPSRows=(officer:string)=>{
-  const L=(latest?.rows||[]).filter(r=>r.officer===officer).sort((a,b)=>String(a.psNo).localeCompare(String(b.psNo),undefined,{numeric:true}));
+  const L=(latest?.rows||[]).filter(r=>r.officer===officer && String(r.psNo??"").trim()!=="").sort((a,b)=>String(a.psNo).localeCompare(String(b.psNo),undefined,{numeric:true}));
   const E=new Map((earlier?.rows||[]).filter(r=>r.officer===officer).map(r=>[r.psNo,r]));
   return L.map((r,i)=>{
    const e=E.get(r.psNo);
    const totalDisposed=r.nmDisposed+r.dDisposed;
    const nmPending=r.nmTotal-r.nmDisposed;
    const dPending=r.dTotal-r.dDisposed;
-   return [i+1,r.psNo,r.blo,r.supervisor,r.nmTotal+r.dTotal,r.nmTotal,r.nmDisposed,r.nmDisposed-(e?.nmDisposed||0),percentage(r.nmDisposed,r.nmTotal)+"%",nmPending,r.nmDocs,r.dTotal,r.dDisposed,r.dDisposed-(e?.dDisposed||0),percentage(r.dDisposed,r.dTotal)+"%",dPending,r.dLetter,totalDisposed,percentage(totalDisposed,r.nmTotal+r.dTotal)+"%"];
+   return [i+1,r.psNo,r.blo,r.supervisor,r.nmTotal+r.dTotal,r.nmTotal,r.nmDisposed,r.nmDisposed-(e?.nmDisposed||0),percentage(r.nmDisposed,r.nmTotal).toFixed(1)+"%",nmPending,r.nmDocs,r.dTotal,r.dDisposed,r.dDisposed-(e?.dDisposed||0),percentage(r.dDisposed,r.dTotal).toFixed(1)+"%",dPending,r.dLetter,totalDisposed,percentage(totalDisposed,r.nmTotal+r.dTotal).toFixed(1)+"%"];
   });
+ };
+ const buildOfficerPSTotal=(officer:string)=>{
+  const L=(latest?.rows||[]).filter(r=>r.officer===officer && String(r.psNo??"").trim()!=="");
+  const E=new Map((earlier?.rows||[]).filter(r=>r.officer===officer).map(r=>[r.psNo,r]));
+  const psCount=new Set(L.map(r=>String(r.psNo).trim()).filter(Boolean)).size;
+  const sum=(fn:(r:(typeof L)[number])=>number)=>L.reduce((a,r)=>a+(Number(fn(r))||0),0);
+  const totalNotices=sum(r=>r.nmTotal+r.dTotal);
+  const nmTotal=sum(r=>r.nmTotal),nmLatest=sum(r=>r.nmDisposed),nmDocs=sum(r=>r.nmDocs);
+  const nmDifference=L.reduce((a,r)=>a+r.nmDisposed-(E.get(r.psNo)?.nmDisposed||0),0);
+  const nmPending=sum(r=>r.nmTotal-r.nmDisposed);
+  const nmEarlier=L.reduce((a,r)=>a+(E.get(r.psNo)?.nmDisposed||0),0);
+  const dTotal=sum(r=>r.dTotal),dLatest=sum(r=>r.dDisposed),dLetters=sum(r=>r.dLetter);
+  const dDifference=L.reduce((a,r)=>a+r.dDisposed-(E.get(r.psNo)?.dDisposed||0),0);
+  const dEarlier=L.reduce((a,r)=>a+(E.get(r.psNo)?.dDisposed||0),0);
+  const dPending=sum(r=>r.dTotal-r.dDisposed);
+  const totalDisposed=nmLatest+dLatest,totalPending=totalNotices-totalDisposed;
+  const nmPct=nmTotal>0?nmLatest/nmTotal*100:0;
+  const dPct=dTotal>0?dLatest/dTotal*100:0;
+  const totalPct=totalNotices>0?totalDisposed/totalNotices*100:0;
+  const summary=reports.find(r=>r.officer===officer);
+  const checks:Record<string,[number,number]> = {
+   "NO. OF PS":[psCount,summary?.psCount||0],"TOTAL NOTICES":[totalNotices,summary?.totalNotices||0],
+   "TOTAL NO MAPPING":[nmTotal,summary?.nmTotal||0],"NM DISP. LATEST":[nmLatest,summary?.nmLatest||0],
+   "NM DIFF.":[nmDifference,summary?.nmDifference||0],"PENDING NO MAPPING CASES":[nmPending,summary?.nmPending||0],
+   "NM DOCS UPLOADED":[nmDocs,summary?.nmDocs||0],"TOTAL DISCREPANCY":[dTotal,summary?.dTotal||0],
+   "DISC. DISP. LATEST":[dLatest,summary?.dLatest||0],"DISC. DIFF.":[dDifference,summary?.dDifference||0],
+   "PENDING DISCREPANCY CASES":[dPending,summary?.dPending||0],"BLO LETTER UPLOADED":[dLetters,summary?.dLetters||0],
+   "TOTAL NOTICES DISPOSED":[totalDisposed,summary?.totalDisposed||0],"TOTAL NOTICES PENDING":[totalPending,summary?.totalPending||0]
+  };
+  const mismatches=Object.entries(checks).filter(([,v])=>v[0]!==v[1]);
+  return {psCount,totalNotices,nmTotal,nmLatest,nmDifference,nmPending,nmDocs,nmEarlier,dTotal,dLatest,dDifference,dPending,dLetters,dEarlier,totalDisposed,totalPending,nmPct,dPct,totalPct,mismatches,
+   pdfRow:[psCount,{content:"TOTAL - "+officer,colSpan:3},totalNotices,nmTotal,nmLatest,nmDifference,nmPct.toFixed(1)+"%",nmPending,nmDocs,dTotal,dLatest,dDifference,dPct.toFixed(1)+"%",dPending,dLetters,totalDisposed,totalPct.toFixed(1)+"%"]};
  };
 
  const pdf=()=>{
   if(!latest||!earlier)return;
+  const integrity=pdfRows.map(r=>({officer:r.officer,total:buildOfficerPSTotal(r.officer)})).filter(x=>x.total.mismatches.length);
+  if(integrity.length){
+   const details=integrity.map(x=>x.officer+": "+x.total.mismatches.map(([k,v])=>k+" (PS total "+v[0]+", summary "+v[1]+")").join(", ")).join(" | ");
+   setError("PDF not generated: officer PS-wise totals do not match the Officer-Wise Summary. "+details);
+   return;
+  }
+  setError("");
   const doc=new jsPDF({orientation:"landscape",unit:"mm",format:"a3"});
   const navy:[number,number,number]=[31,56,100],brown:[number,number,number]=[131,60,11],yellow:[number,number,number]=[255,248,225],grid:[number,number,number]=[184,192,204],grand:[number,number,number]=[217,225,242];
 
@@ -208,7 +247,7 @@ export default function Page(){
     detailPageHeader(officerTitle);
     detailY=18;
     autoTable(doc,{
-      theme:"grid",startY:detailY,head:[psGroup,psHead],body:psRows,
+      theme:"grid",startY:detailY,head:[psGroup,psHead],body:[...psRows,buildOfficerPSTotal(officerRow.officer).pdfRow],
       tableWidth:385,margin:{left:17.5,right:17.5,top:18,bottom:12},
       showHead:"everyPage",pageBreak:"auto",rowPageBreak:"avoid",
       styles:{font:"helvetica",fontStyle:"bold" as const,fontSize:8.5,cellPadding:1.0,lineColor:grid,lineWidth:.25,textColor:[20,28,38] as [number,number,number],halign:"center" as const,valign:"middle" as const,overflow:"linebreak" as const},
@@ -224,6 +263,21 @@ export default function Page(){
           return;
         }
         if(data.section!=="body")return;
+        if(data.row.index===psRows.length){
+          data.cell.styles.fillColor=grand;
+          data.cell.styles.textColor=navy;
+          data.cell.styles.fontStyle="bold";
+          data.cell.styles.lineColor=navy;
+          data.cell.styles.lineWidth={top:0.6,right:0.25,bottom:0.25,left:0.25};
+          data.cell.styles.minCellHeight=9;
+          if(data.column.index===8||data.column.index===14||data.column.index===18){
+            const style=getPercentageStyle(data.cell.raw);
+            data.cell.styles.fillColor=hexRgb(style.backgroundColor);
+            data.cell.styles.textColor=hexRgb(style.color);
+            data.cell.styles.fontStyle="bold";
+          }
+          return;
+        }
         const p=psRows[data.row.index] as any[]|undefined;
         if(!p)return;
         if(data.column.index===8||data.column.index===14||data.column.index===18){
@@ -313,7 +367,7 @@ export default function Page(){
       "dTotal","dEarlier","dLatest","dDifference","dPct","dLetters","dPending","x","totalDisposed","totalDisposedPct","totalPending"
     ][i]||"nmDifference") as keyof OfficerReportRow)}>{c}<ArrowUpDown size={10}/></th>)}</tr>
    </thead><tbody>
-    {rows.map((r,i)=>{const vals=[i+1,formatOfficer(r),r.psCount,r.totalNotices,r.nmTotal,r.nmEarlier,r.nmLatest,r.nmDifference,r.nmPct+"%",r.nmDocs,r.nmPending,"",r.dTotal,r.dEarlier,r.dLatest,r.dDifference,r.dPct+"%",r.dLetters,r.dPending,"",r.totalDisposed,r.totalDisposedPct+"%",r.totalPending];return <React.Fragment key={r.officer}><tr>{vals.map((v,j)=>{if(j===11||j===19)return <td key={j} className="sep"/>;const pctValue=j===8?r.nmPct:j===16?r.dPct:j===21?r.totalDisposedPct:null;const k=j===7?groups.nm.get(r.officer):j===15?groups.disc.get(r.officer):"";const cls=[j===1?"name":"",j===4||j===12?"earlier":"",k?"colour "+k:""].join(" ");const pctStyle=pctValue===null?{}:{background:rgbCss(percentageColor(pctValue)),color:percentageTextColor(pctValue),fontWeight:850,textAlign:"center" as const};return <td key={j} className={cls} style={pctStyle}>{v}</td>})}</tr><tr className="psDetailRow"><td colSpan={23}><div className="psTitle">PS-WISE DETAILS — {formatOfficer(r)}</div><div className="psTableWrap"><table className="psTable"><thead><tr>{["S.No.","PS No.","BLO NAME","BLO SUPERVISOR","TOTAL NOTICES","TOTAL NO MAPPING","NM DISP. EARLIER","NM DISP. LATEST","NM DIFF.","NM DOCS UPLOADED","TOTAL DISCREPANCY","DISC. DISP. EARLIER","DISC. DISP. LATEST","DISC. DIFF.","BLO LETTER UPLOADED","TOTAL NOTICES DISPOSED","% TOTAL DISPOSED"].map(h=><th key={h}>{h}</th>)}</tr></thead><tbody>{buildOfficerPSRows(r.officer).map((p:any)=><tr key={String(p[1])}>{p.map((v:any,j:number)=>{const pct=j===16?Number(String(v).replace("%","")):null;return <td key={j} style={pct===null?{}:{background:rgbCss(percentageColor(pct)),color:percentageTextColor(pct),fontWeight:850,textAlign:"center" as const}}>{v}</td>})}</tr>)}</tbody></table></div></td></tr></React.Fragment>})}
+    {rows.map((r,i)=>{const vals=[i+1,formatOfficer(r),r.psCount,r.totalNotices,r.nmTotal,r.nmEarlier,r.nmLatest,r.nmDifference,r.nmPct+"%",r.nmDocs,r.nmPending,"",r.dTotal,r.dEarlier,r.dLatest,r.dDifference,r.dPct+"%",r.dLetters,r.dPending,"",r.totalDisposed,r.totalDisposedPct+"%",r.totalPending];return <React.Fragment key={r.officer}><tr>{vals.map((v,j)=>{if(j===11||j===19)return <td key={j} className="sep"/>;const pctValue=j===8?r.nmPct:j===16?r.dPct:j===21?r.totalDisposedPct:null;const k=j===7?groups.nm.get(r.officer):j===15?groups.disc.get(r.officer):"";const cls=[j===1?"name":"",j===4||j===12?"earlier":"",k?"colour "+k:""].join(" ");const pctStyle=pctValue===null?{}:{background:rgbCss(percentageColor(pctValue)),color:percentageTextColor(pctValue),fontWeight:850,textAlign:"center" as const};return <td key={j} className={cls} style={pctStyle}>{v}</td>})}</tr><tr className="psDetailRow"><td colSpan={23}><div className="psTitle">PS-WISE DETAILS — {formatOfficer(r)}</div><div className="psTableWrap"><table className="psTable"><thead><tr>{["S.No.","PS No.","BLO NAME","BLO SUPERVISOR","TOTAL NOTICES","TOTAL NO MAPPING","NM DISP. EARLIER","NM DISP. LATEST","NM DIFF.","NM DOCS UPLOADED","TOTAL DISCREPANCY","DISC. DISP. EARLIER","DISC. DISP. LATEST","DISC. DIFF.","BLO LETTER UPLOADED","TOTAL NOTICES DISPOSED","% TOTAL DISPOSED"].map(h=><th key={h}>{h}</th>)}</tr></thead><tbody>{buildOfficerPSRows(r.officer).map((p:any)=><tr key={String(p[1])}>{p.map((v:any,j:number)=>{const pct=j===8||j===14||j===18?Number(String(v).replace("%","")):null;return <td key={j} style={pct===null?{}:{background:rgbCss(percentageColor(pct)),color:percentageTextColor(pct),fontWeight:850,textAlign:"center" as const}}>{v}</td>})}</tr>)}{(()=>{const t=buildOfficerPSTotal(r.officer);return <tr className="officerTotalRow"><td>{t.psCount}</td><td colSpan={3}>TOTAL - {r.officer}</td><td>{formatNumber(t.totalNotices)}</td><td>{formatNumber(t.nmTotal)}</td><td>{formatNumber(t.nmEarlier)}</td><td>{formatNumber(t.nmLatest)}</td><td>{formatNumber(t.nmDifference)}</td><td>{formatNumber(t.nmDocs)}</td><td>{formatNumber(t.dTotal)}</td><td>{formatNumber(t.dEarlier)}</td><td>{formatNumber(t.dLatest)}</td><td>{formatNumber(t.dDifference)}</td><td>{formatNumber(t.dLetters)}</td><td>{formatNumber(t.totalDisposed)}</td><td style={{background:rgbCss(percentageColor(t.totalPct)),color:percentageTextColor(t.totalPct)}}>{t.totalPct.toFixed(1)}%</td></tr>})()}</tbody></table></div></td></tr></React.Fragment>})}
     <tr className="grand"><td></td><td>GRAND TOTAL - AC-34 MATIALA</td><td>{psCount}</td><td>{formatNumber(total.totalNotices)}</td><td>{formatNumber(total.nmTotal)}</td><td>{formatNumber(total.nmEarlier)}</td><td>{formatNumber(total.nmLatest)}</td><td>{formatNumber(total.nmDifference)}</td><td>{total.nmPct}%</td><td>{formatNumber(total.nmDocs)}</td><td>{formatNumber(total.nmPending)}</td><td className="sep"></td><td>{formatNumber(total.dTotal)}</td><td>{formatNumber(total.dEarlier)}</td><td>{formatNumber(total.dLatest)}</td><td>{formatNumber(total.dDifference)}</td><td>{total.dPct}%</td><td>{formatNumber(total.dLetters)}</td><td>{formatNumber(total.dPending)}</td><td className="sep"></td><td>{formatNumber(total.totalDisposed)}</td><td>{total.totalDisposedPct}%</td><td>{formatNumber(total.totalPending)}</td></tr>
    </tbody></table></div>
    <div className="legend"><b>COLOUR CODE:</b><span className="low">LOW (needs attention)</span><span className="medium">MEDIUM</span><span className="high">HIGH (good)</span></div>
@@ -362,7 +416,7 @@ export default function Page(){
    .colour.low{background:#5a252c!important}.colour.medium{background:#5a481d!important}.colour.high{background:#214d35!important}
    .sep{width:7px;min-width:7px;padding:0!important;background:#0c1422!important;border-left:0!important;border-right:0!important}
    .grand td{background:#172a47!important;color:#f1f6ff!important;font-weight:850;border-color:#3b5577}
-   .psDetailRow>td{padding:0!important;background:#0a111d!important}.psTitle{background:linear-gradient(90deg,#111f35,#0e1827);color:#8fb6f4;font-weight:800;text-align:left;padding:7px 10px;font-size:10px;border-bottom:1px solid #2b405d;letter-spacing:.25px}.psTableWrap{overflow:auto}.psTable{min-width:1900px;width:100%;border-collapse:collapse}.psTable th,.psTable td{font-size:9px;padding:5px 4px;border-color:#293b55}.psTable th{background:#67350f;color:#fff;font-size:7.5px}.psTable td{font-weight:700;color:#cbd6e5;background:#0d1725}.psTable tr:nth-child(even) td{background:#101c2d}.psTable tr:hover td{background:#15263d}.psTable td:nth-child(9),.psTable td:nth-child(14){background:#2c291d;color:#f5e7b1}
+   .psDetailRow>td{padding:0!important;background:#0a111d!important}.psTitle{background:linear-gradient(90deg,#111f35,#0e1827);color:#8fb6f4;font-weight:800;text-align:left;padding:7px 10px;font-size:10px;border-bottom:1px solid #2b405d;letter-spacing:.25px}.psTableWrap{overflow:auto}.psTable{min-width:1900px;width:100%;border-collapse:collapse}.psTable th,.psTable td{font-size:9px;padding:5px 4px;border-color:#293b55}.psTable th{background:#67350f;color:#fff;font-size:7.5px}.psTable td{font-weight:700;color:#cbd6e5;background:#0d1725}.psTable tr:nth-child(even) td{background:#101c2d}.psTable tr:hover td{background:#15263d}.psTable td:nth-child(9),.psTable td:nth-child(14){background:#2c291d;color:#f5e7b1}.psTable .officerTotalRow td{background:#D9E1F2!important;color:#1F3864!important;font-weight:900;border-top:2px solid #1F3864;padding-top:7px;padding-bottom:7px}.psTable .officerTotalRow td:last-child{background:inherit!important;color:inherit!important}
    .legend{padding:9px 12px 3px;display:flex;align-items:center;gap:8px;font-size:10px;background:#0d1725}.legend span{padding:4px 10px;font-weight:800;border:1px solid #3b4d66;border-radius:4px}.legend .low{background:#5a252c}.legend .medium{background:#5a481d}.legend .high{background:#214d35}.legendnote,.notes{font-size:9px;color:#71829b;padding:4px 12px;background:#0d1725}.notes{padding-bottom:12px}
    .empty{margin:24px;padding:52px;background:linear-gradient(145deg,#111a2b,#0d1523);border:1px solid #293c59;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:9px;color:#7f90aa;box-shadow:0 15px 40px rgba(0,0,0,.2)}.empty b{color:#dce8fa}
    @media(max-width:1100px){.summaryCards{grid-template-columns:repeat(3,1fr)}}@media(max-width:900px){.summaryCards{grid-template-columns:repeat(2,1fr)}.uploads{grid-template-columns:1fr}.actions{align-items:flex-start;gap:10px;flex-direction:column}.panel{margin-left:12px;margin-right:12px}.uploads,.summaryCards{padding-left:12px;padding-right:12px}}
