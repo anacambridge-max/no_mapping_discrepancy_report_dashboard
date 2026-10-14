@@ -30,21 +30,22 @@ const color=(v:any):[number,number,number]=>{
 };
 const rgbCss=(rgb:[number,number,number])=>"rgb("+rgb.join(",")+")";
 // Fixed percentage bands requested for all percentage cells (grand-total row stays unchanged).
+// Shared fixed-range palette for both the web preview and exported PDF.
 const percentageColor=(value:number):[number,number,number]=>{
-  if(value<20)return [211,47,47];       // #D32F2F dark red
-  if(value<30)return [255,107,107];     // #FF6B6B light red
-  if(value<40)return [245,124,0];       // #F57C00 dark orange
-  if(value<60)return [255,183,77];      // #FFB74D light orange
-  if(value<70)return [255,213,79];      // #FFD54F yellow
-  if(value<80)return [212,232,92];      // #D4E85C greenish yellow
-  if(value<90)return [168,216,109];     // #A8D86D yellowish light green
-  return [46,173,98];                   // #2EAD62 green
+  if(value<20)return [201,76,76];       // #C94C4C deep red
+  if(value<30)return [229,115,115];     // #E57373 soft red
+  if(value<40)return [237,138,90];      // #ED8A5A muted coral
+  if(value<60)return [242,176,94];      // #F2B05E soft orange
+  if(value<70)return [243,214,117];     // #F3D675 warm yellow
+  if(value<80)return [209,220,120];     // #D1DC78 yellow green
+  if(value<90)return [145,201,139];     // #91C98B soft light green
+  return [63,166,107];                  // #3FA66B professional green
 };
-const percentageTextColor=(value:number)=>value<20||value>=90?"#FFFFFF":"#111111";
-// PDF-only parser: accepts numeric values or strings such as "61.5%".
+const percentageTextColor=(value:number)=>value<20||value>=90?"#FFFFFF":"#111827";
+// Parse numeric percentages consistently, including strings such as "80.5%".
 const getPercentageStyle=(input:any)=>{
   const value=Number.parseFloat(String(input??"").replace("%","").trim());
-  if(!Number.isFinite(value))return {backgroundColor:"#FFFFFF",color:"#000000"};
+  if(!Number.isFinite(value))return {backgroundColor:"#FFFFFF",color:"#1F2937"};
   const rgb=percentageColor(value);
   const backgroundColor="#"+rgb.map(v=>v.toString(16).padStart(2,"0")).join("").toUpperCase();
   return {backgroundColor,color:percentageTextColor(value)};
@@ -177,6 +178,7 @@ export default function Page(){
       data.cell.styles.fillColor=hexRgb(style.backgroundColor);
       data.cell.styles.textColor=hexRgb(style.color);
       data.cell.styles.fontStyle="bold";
+      data.cell.styles.halign="center";
     }
   }});
   // PS-wise detail section: all concerned PS are listed officer-by-officer in the same report.
@@ -311,7 +313,7 @@ export default function Page(){
       "dTotal","dEarlier","dLatest","dDifference","dPct","dLetters","dPending","x","totalDisposed","totalDisposedPct","totalPending"
     ][i]||"nmDifference") as keyof OfficerReportRow)}>{c}<ArrowUpDown size={10}/></th>)}</tr>
    </thead><tbody>
-    {rows.map((r,i)=>{const vals=[i+1,formatOfficer(r),r.psCount,r.totalNotices,r.nmTotal,r.nmEarlier,r.nmLatest,r.nmDifference,r.nmPct+"%",r.nmDocs,r.nmPending,"",r.dTotal,r.dEarlier,r.dLatest,r.dDifference,r.dPct+"%",r.dLetters,r.dPending,"",r.totalDisposed,r.totalDisposedPct+"%",r.totalPending];return <React.Fragment key={r.officer}><tr>{vals.map((v,j)=>{if(j===11||j===19)return <td key={j} className="sep"/>;const pctValue=j===8?r.nmPct:j===16?r.dPct:j===21?r.totalDisposedPct:null;const k=j===7?groups.nm.get(r.officer):j===15?groups.disc.get(r.officer):"";const cls=[j===1?"name":"",j===4||j===12?"earlier":"",k?"colour "+k:""].join(" ");const pctStyle=pctValue===null?{}:{background:rgbCss(percentageColor(pctValue)),color:percentageTextColor(pctValue),fontWeight:850};return <td key={j} className={cls} style={pctStyle}>{v}</td>})}</tr><tr className="psDetailRow"><td colSpan={23}><div className="psTitle">PS-WISE DETAILS — {formatOfficer(r)}</div><div className="psTableWrap"><table className="psTable"><thead><tr>{["S.No.","PS No.","BLO NAME","BLO SUPERVISOR","TOTAL NOTICES","TOTAL NO MAPPING","NM DISP. EARLIER","NM DISP. LATEST","NM DIFF.","NM DOCS UPLOADED","TOTAL DISCREPANCY","DISC. DISP. EARLIER","DISC. DISP. LATEST","DISC. DIFF.","BLO LETTER UPLOADED","TOTAL NOTICES DISPOSED","% TOTAL DISPOSED"].map(h=><th key={h}>{h}</th>)}</tr></thead><tbody>{buildOfficerPSRows(r.officer).map((p:any)=><tr key={String(p[1])}>{p.map((v:any,j:number)=>{const pct=j===16?Number(String(v).replace("%","")):null;return <td key={j} style={pct===null?{}:{background:rgbCss(percentageColor(pct)),color:percentageTextColor(pct),fontWeight:850}}>{v}</td>})}</tr>)}</tbody></table></div></td></tr></React.Fragment>})}
+    {rows.map((r,i)=>{const vals=[i+1,formatOfficer(r),r.psCount,r.totalNotices,r.nmTotal,r.nmEarlier,r.nmLatest,r.nmDifference,r.nmPct+"%",r.nmDocs,r.nmPending,"",r.dTotal,r.dEarlier,r.dLatest,r.dDifference,r.dPct+"%",r.dLetters,r.dPending,"",r.totalDisposed,r.totalDisposedPct+"%",r.totalPending];return <React.Fragment key={r.officer}><tr>{vals.map((v,j)=>{if(j===11||j===19)return <td key={j} className="sep"/>;const pctValue=j===8?r.nmPct:j===16?r.dPct:j===21?r.totalDisposedPct:null;const k=j===7?groups.nm.get(r.officer):j===15?groups.disc.get(r.officer):"";const cls=[j===1?"name":"",j===4||j===12?"earlier":"",k?"colour "+k:""].join(" ");const pctStyle=pctValue===null?{}:{background:rgbCss(percentageColor(pctValue)),color:percentageTextColor(pctValue),fontWeight:850,textAlign:"center" as const};return <td key={j} className={cls} style={pctStyle}>{v}</td>})}</tr><tr className="psDetailRow"><td colSpan={23}><div className="psTitle">PS-WISE DETAILS — {formatOfficer(r)}</div><div className="psTableWrap"><table className="psTable"><thead><tr>{["S.No.","PS No.","BLO NAME","BLO SUPERVISOR","TOTAL NOTICES","TOTAL NO MAPPING","NM DISP. EARLIER","NM DISP. LATEST","NM DIFF.","NM DOCS UPLOADED","TOTAL DISCREPANCY","DISC. DISP. EARLIER","DISC. DISP. LATEST","DISC. DIFF.","BLO LETTER UPLOADED","TOTAL NOTICES DISPOSED","% TOTAL DISPOSED"].map(h=><th key={h}>{h}</th>)}</tr></thead><tbody>{buildOfficerPSRows(r.officer).map((p:any)=><tr key={String(p[1])}>{p.map((v:any,j:number)=>{const pct=j===16?Number(String(v).replace("%","")):null;return <td key={j} style={pct===null?{}:{background:rgbCss(percentageColor(pct)),color:percentageTextColor(pct),fontWeight:850,textAlign:"center" as const}}>{v}</td>})}</tr>)}</tbody></table></div></td></tr></React.Fragment>})}
     <tr className="grand"><td></td><td>GRAND TOTAL - AC-34 MATIALA</td><td>{psCount}</td><td>{formatNumber(total.totalNotices)}</td><td>{formatNumber(total.nmTotal)}</td><td>{formatNumber(total.nmEarlier)}</td><td>{formatNumber(total.nmLatest)}</td><td>{formatNumber(total.nmDifference)}</td><td>{total.nmPct}%</td><td>{formatNumber(total.nmDocs)}</td><td>{formatNumber(total.nmPending)}</td><td className="sep"></td><td>{formatNumber(total.dTotal)}</td><td>{formatNumber(total.dEarlier)}</td><td>{formatNumber(total.dLatest)}</td><td>{formatNumber(total.dDifference)}</td><td>{total.dPct}%</td><td>{formatNumber(total.dLetters)}</td><td>{formatNumber(total.dPending)}</td><td className="sep"></td><td>{formatNumber(total.totalDisposed)}</td><td>{total.totalDisposedPct}%</td><td>{formatNumber(total.totalPending)}</td></tr>
    </tbody></table></div>
    <div className="legend"><b>COLOUR CODE:</b><span className="low">LOW (needs attention)</span><span className="medium">MEDIUM</span><span className="high">HIGH (good)</span></div>
