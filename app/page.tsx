@@ -24,22 +24,6 @@ function rowValues(r:OfficerReportRow,rowIndex:number){
  ];
 }
 
-const excelScaleColor=(value:number,min:number,mid:number,max:number):[number,number,number]=>{
-  const v=Math.max(min,Math.min(max,value));
-  const red: [number,number,number] = [248,105,107];
-  const yellow: [number,number,number] = [255,235,132];
-  const green: [number,number,number] = [99,190,123];
-  const lerp=(a:number[],b:number[],t:number):[number,number,number]=>
-    [0,1,2].map(i=>Math.round(a[i]+(b[i]-a[i])*t)) as [number,number,number];
-  if(max===min)return yellow;
-  if(v<=mid)return lerp(red,yellow,mid===min?1:(v-min)/(mid-min));
-  return lerp(yellow,green,max===mid?1:(v-mid)/(max-mid));
-};
-const excelScaleParams=(values:number[])=>{
-  const clean=values.filter(Number.isFinite).sort((a,b)=>a-b);
-  if(!clean.length)return {min:0,mid:50,max:100};
-  return {min:clean[0],mid:clean[Math.floor((clean.length-1)/2)],max:clean[clean.length-1]};
-};
 const color=(v:any):[number,number,number]=>{
   if(Array.isArray(v))return v as [number,number,number];
   return [255,235,132];
@@ -57,15 +41,22 @@ const percentageColor=(value:number):[number,number,number]=>{
   return [46,173,98];                   // #2EAD62 green
 };
 const percentageTextColor=(value:number)=>value<20||value>=90?"#FFFFFF":"#111111";
-const relativeGroups=(items:Array<{key:string;value:number}>)=>{
-  const sorted=items.map(x=>x.value).filter(Number.isFinite).sort((a,b)=>a-b);
-  const quantile=(p:number)=>{
-    if(!sorted.length)return 0;
-    const i=(sorted.length-1)*p,lo=Math.floor(i),hi=Math.ceil(i);
-    return sorted[lo]+(sorted[hi]-sorted[lo])*(i-lo);
-  };
-  const q1=quantile(1/3),q2=quantile(2/3);
-  return new Map(items.map(x=>[x.key,(x.value<=q1?"low":x.value<=q2?"medium":"high") as "low"|"medium"|"high"]));
+// PDF-only parser: accepts numeric values or strings such as "61.5%".
+const getPercentageStyle=(input:any)=>{
+  const value=Number.parseFloat(String(input??"").replace("%","").trim());
+  if(!Number.isFinite(value))return {backgroundColor:"#FFFFFF",color:"#000000"};
+  if(value<20)return {backgroundColor:"#D32F2F",color:"#FFFFFF"};
+  if(value<30)return {backgroundColor:"#FF6B6B",color:"#000000"};
+  if(value<40)return {backgroundColor:"#F57C00",color:"#000000"};
+  if(value<60)return {backgroundColor:"#FFB74D",color:"#000000"};
+  if(value<70)return {backgroundColor:"#FFD54F",color:"#000000"};
+  if(value<80)return {backgroundColor:"#C5E86C",color:"#000000"};
+  if(value<90)return {backgroundColor:"#81C784",color:"#000000"};
+  return {backgroundColor:"#2EAD62",color:"#FFFFFF"};
+};
+const hexRgb=(hex:string):[number,number,number]=>{
+  const h=hex.replace("#","");
+  return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];
 };
 
 export default function Page(){
@@ -140,17 +131,6 @@ export default function Page(){
 
  const pdf=()=>{
   if(!latest||!earlier)return;
-  // PDF-only colour groups: ONLY the three disposal percentage columns.
-  const fixedPctGroup=(rows:any[],get:(r:any)=>number)=>{
-    const out=new Map<string,[number,number,number]>();
-    rows.forEach(r=>out.set(r.officer,percentageColor(get(r))));
-    return out;
-  };
-  const pdfPctGroups={
-    nm:fixedPctGroup(pdfRows,r=>r.nmPct),
-    disc:fixedPctGroup(pdfRows,r=>r.dPct),
-    total:fixedPctGroup(pdfRows,r=>r.totalDisposedPct)
-  };
   const doc=new jsPDF({orientation:"landscape",unit:"mm",format:"a3"});
   const navy:[number,number,number]=[31,56,100],brown:[number,number,number]=[131,60,11],yellow:[number,number,number]=[255,248,225],grid:[number,number,number]=[184,192,204],grand:[number,number,number]=[217,225,242];
 
@@ -197,9 +177,12 @@ export default function Page(){
     if(data.section!=="body")return;
     if(data.row.index===pdfRows.length){data.cell.styles.fillColor=grand;data.cell.styles.fontStyle="bold";return;}
     const r=pdfRows[data.row.index];if(!r)return;
-    if(data.column.index===7){data.cell.styles.fillColor=pdfPctGroups.nm.get(r.officer)||percentageColor(r.nmPct);data.cell.styles.textColor=r.nmPct<20||r.nmPct>=90?[255,255,255]:[17,17,17];}
-    if(data.column.index===14){data.cell.styles.fillColor=pdfPctGroups.disc.get(r.officer)||percentageColor(r.dPct);data.cell.styles.textColor=r.dPct<20||r.dPct>=90?[255,255,255]:[17,17,17];}
-    if(data.column.index===19){data.cell.styles.fillColor=pdfPctGroups.total.get(r.officer)||percentageColor(r.totalDisposedPct);data.cell.styles.textColor=r.totalDisposedPct<20||r.totalDisposedPct>=90?[255,255,255]:[17,17,17];}
+    if(data.column.index===7||data.column.index===14||data.column.index===19){
+      const style=getPercentageStyle(data.cell.raw);
+      data.cell.styles.fillColor=hexRgb(style.backgroundColor);
+      data.cell.styles.textColor=hexRgb(style.color);
+      data.cell.styles.fontStyle="bold";
+    }
   }});
   // PS-wise detail section: all concerned PS are listed officer-by-officer in the same report.
   // IMPORTANT: Officer-wise summary table above is intentionally untouched.
@@ -246,14 +229,11 @@ export default function Page(){
         if(data.section!=="body")return;
         const p=psRows[data.row.index] as any[]|undefined;
         if(!p)return;
-        if(data.column.index===8){
-          const value=parseFloat(String(p[8]))||0;data.cell.styles.fillColor=percentageColor(value);data.cell.styles.textColor=value<20||value>=90?[255,255,255]:[17,17,17];
-        }
-        if(data.column.index===14){
-          const value=parseFloat(String(p[14]))||0;data.cell.styles.fillColor=percentageColor(value);data.cell.styles.textColor=value<20||value>=90?[255,255,255]:[17,17,17];
-        }
-        if(data.column.index===18){
-          const value=parseFloat(String(p[18]))||0;data.cell.styles.fillColor=percentageColor(value);data.cell.styles.textColor=value<20||value>=90?[255,255,255]:[17,17,17];
+        if(data.column.index===8||data.column.index===14||data.column.index===18){
+          const style=getPercentageStyle(data.cell.raw);
+          data.cell.styles.fillColor=hexRgb(style.backgroundColor);
+          data.cell.styles.textColor=hexRgb(style.color);
+          data.cell.styles.fontStyle="bold";
         }
       }
     });
