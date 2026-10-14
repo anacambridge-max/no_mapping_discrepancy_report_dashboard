@@ -45,9 +45,18 @@ const color=(v:any):[number,number,number]=>{
   return [255,235,132];
 };
 const rgbCss=(rgb:[number,number,number])=>"rgb("+rgb.join(",")+")";
-// Legacy report colours: relative ranking within each percentage column.
-const categoryRgb=(group:"low"|"medium"|"high"):[number,number,number] =>
-  group==="low"?[248,105,107]:group==="medium"?[255,235,132]:[99,190,123];
+// Fixed percentage bands requested for all percentage cells (grand-total row stays unchanged).
+const percentageColor=(value:number):[number,number,number]=>{
+  if(value<20)return [211,47,47];       // #D32F2F dark red
+  if(value<30)return [255,107,107];     // #FF6B6B light red
+  if(value<40)return [245,124,0];       // #F57C00 dark orange
+  if(value<60)return [255,183,77];      // #FFB74D light orange
+  if(value<70)return [255,213,79];      // #FFD54F yellow
+  if(value<80)return [197,232,108];     // #C5E86C greenish yellow
+  if(value<90)return [129,199,132];     // #81C784 light green
+  return [46,173,98];                   // #2EAD62 green
+};
+const percentageTextColor=(value:number)=>value<20||value>=90?"#FFFFFF":"#111111";
 const relativeGroups=(items:Array<{key:string;value:number}>)=>{
   const sorted=items.map(x=>x.value).filter(Number.isFinite).sort((a,b)=>a-b);
   const quantile=(p:number)=>{
@@ -107,8 +116,8 @@ export default function Page(){
  const total=grandOfficer(rows);
  const psCount=new Set((latest?.rows||[]).map(r=>r.psNo)).size;
  const groups={
-  nm:useMemo(()=>percentileGroups(rows,r=>r.nmPct),[rows]),
-  disc:useMemo(()=>percentileGroups(rows,r=>r.dPct),[rows]),
+  nm:useMemo(()=>percentileGroups(rows,r=>r.nmDifference),[rows]),
+  disc:useMemo(()=>percentileGroups(rows,r=>r.dDifference),[rows]),
   totalDisposed:useMemo(()=>percentileGroups(rows,r=>r.totalDisposedPct),[rows])
  };
 
@@ -133,9 +142,8 @@ export default function Page(){
   if(!latest||!earlier)return;
   // PDF-only colour groups: ONLY the three disposal percentage columns.
   const fixedPctGroup=(rows:any[],get:(r:any)=>number)=>{
-    const groups=relativeGroups(rows.map(r=>({key:r.officer,value:get(r)})));
     const out=new Map<string,[number,number,number]>();
-    rows.forEach(r=>out.set(r.officer,categoryRgb(groups.get(r.officer)||"medium")));
+    rows.forEach(r=>out.set(r.officer,percentageColor(get(r))));
     return out;
   };
   const pdfPctGroups={
@@ -189,9 +197,9 @@ export default function Page(){
     if(data.section!=="body")return;
     if(data.row.index===pdfRows.length){data.cell.styles.fillColor=grand;data.cell.styles.fontStyle="bold";return;}
     const r=pdfRows[data.row.index];if(!r)return;
-    if(data.column.index===7)data.cell.styles.fillColor=color(pdfPctGroups.nm.get(r.officer)||"medium");
-    if(data.column.index===14)data.cell.styles.fillColor=color(pdfPctGroups.disc.get(r.officer)||"medium");
-    if(data.column.index===19)data.cell.styles.fillColor=color(pdfPctGroups.total.get(r.officer)||"medium");
+    if(data.column.index===7){data.cell.styles.fillColor=pdfPctGroups.nm.get(r.officer)||percentageColor(r.nmPct);data.cell.styles.textColor=r.nmPct<20||r.nmPct>=90?[255,255,255]:[17,17,17];}
+    if(data.column.index===14){data.cell.styles.fillColor=pdfPctGroups.disc.get(r.officer)||percentageColor(r.dPct);data.cell.styles.textColor=r.dPct<20||r.dPct>=90?[255,255,255]:[17,17,17];}
+    if(data.column.index===19){data.cell.styles.fillColor=pdfPctGroups.total.get(r.officer)||percentageColor(r.totalDisposedPct);data.cell.styles.textColor=r.totalDisposedPct<20||r.totalDisposedPct>=90?[255,255,255]:[17,17,17];}
   }});
   // PS-wise detail section: all concerned PS are listed officer-by-officer in the same report.
   // IMPORTANT: Officer-wise summary table above is intentionally untouched.
@@ -213,11 +221,10 @@ export default function Page(){
   ];
   const allPS=pdfRows.flatMap(r=>buildOfficerPSRows(r.officer));
   const psGroups={
-    nm:relativeGroups(allPS.map((p,i)=>({key:String(i),value:parseFloat(String(p[8]))||0}))),
-    disc:relativeGroups(allPS.map((p,i)=>({key:String(i),value:parseFloat(String(p[14]))||0}))),
-    total:relativeGroups(allPS.map((p,i)=>({key:String(i),value:parseFloat(String(p[18]))||0})))
+    nm:allPS.map(p=>percentageColor(parseFloat(String(p[8]))||0)),
+    disc:allPS.map(p=>percentageColor(parseFloat(String(p[14]))||0)),
+    total:allPS.map(p=>percentageColor(parseFloat(String(p[18]))||0))
   };
-  const psBand=(group:"low"|"medium"|"high")=>categoryRgb(group);
   pdfRows.forEach((officerRow,oi)=>{
     const psRows=buildOfficerPSRows(officerRow.officer);
     // Each officer starts a distinct section. If a long table continues, the officer heading repeats.
@@ -245,13 +252,13 @@ export default function Page(){
         const p=psRows[data.row.index] as any[]|undefined;
         if(!p)return;
         if(data.column.index===8){
-          data.cell.styles.fillColor=psBand(psGroups.nm.get(String(allPS.findIndex(x=>String(x[1])===String(p[1])&&String(x[2])===String(p[2]))) )||"medium");
+          const value=parseFloat(String(p[8]))||0;data.cell.styles.fillColor=percentageColor(value);data.cell.styles.textColor=value<20||value>=90?[255,255,255]:[17,17,17];
         }
         if(data.column.index===14){
-          data.cell.styles.fillColor=psBand(psGroups.disc.get(String(allPS.findIndex(x=>String(x[1])===String(p[1])&&String(x[2])===String(p[2]))) )||"medium");
+          const value=parseFloat(String(p[14]))||0;data.cell.styles.fillColor=percentageColor(value);data.cell.styles.textColor=value<20||value>=90?[255,255,255]:[17,17,17];
         }
         if(data.column.index===18){
-          data.cell.styles.fillColor=psBand(psGroups.total.get(String(allPS.findIndex(x=>String(x[1])===String(p[1])&&String(x[2])===String(p[2]))) )||"medium");
+          const value=parseFloat(String(p[18]))||0;data.cell.styles.fillColor=percentageColor(value);data.cell.styles.textColor=value<20||value>=90?[255,255,255]:[17,17,17];
         }
       }
     });
@@ -334,7 +341,7 @@ export default function Page(){
       "dTotal","dEarlier","dLatest","dDifference","dPct","dLetters","dPending","x","totalDisposed","totalDisposedPct","totalPending"
     ][i]||"nmDifference") as keyof OfficerReportRow)}>{c}<ArrowUpDown size={10}/></th>)}</tr>
    </thead><tbody>
-    {rows.map((r,i)=>{const vals=[i+1,formatOfficer(r),r.psCount,r.totalNotices,r.nmTotal,r.nmEarlier,r.nmLatest,r.nmDifference,r.nmPct+"%",r.nmDocs,r.nmPending,"",r.dTotal,r.dEarlier,r.dLatest,r.dDifference,r.dPct+"%",r.dLetters,r.dPending,"",r.totalDisposed,r.totalDisposedPct+"%",r.totalPending];return <React.Fragment key={r.officer}><tr>{vals.map((v,j)=>{if(j===11||j===19)return <td key={j} className="sep"/>;const k=j===8?groups.nm.get(r.officer):j===16?groups.disc.get(r.officer):j===21?groups.totalDisposed.get(r.officer):"";const cls=[j===1?"name":"",j===4||j===12?"earlier":"",k?"colour "+k:""].join(" ");return <td key={j} className={cls}>{v}</td>})}</tr><tr className="psDetailRow"><td colSpan={23}><div className="psTitle">PS-WISE DETAILS — {formatOfficer(r)}</div><div className="psTableWrap"><table className="psTable"><thead><tr>{["S.No.","PS No.","BLO NAME","BLO SUPERVISOR","TOTAL NOTICES","TOTAL NO MAPPING","NM DISP. EARLIER","NM DISP. LATEST","NM DIFF.","NM DOCS UPLOADED","TOTAL DISCREPANCY","DISC. DISP. EARLIER","DISC. DISP. LATEST","DISC. DIFF.","BLO LETTER UPLOADED","TOTAL NOTICES DISPOSED","% TOTAL DISPOSED"].map(h=><th key={h}>{h}</th>)}</tr></thead><tbody>{buildOfficerPSRows(r.officer).map((p:any)=><tr key={String(p[1])}>{p.map((v:any,j:number)=><td key={j}>{v}</td>)}</tr>)}</tbody></table></div></td></tr></React.Fragment>})}
+    {rows.map((r,i)=>{const vals=[i+1,formatOfficer(r),r.psCount,r.totalNotices,r.nmTotal,r.nmEarlier,r.nmLatest,r.nmDifference,r.nmPct+"%",r.nmDocs,r.nmPending,"",r.dTotal,r.dEarlier,r.dLatest,r.dDifference,r.dPct+"%",r.dLetters,r.dPending,"",r.totalDisposed,r.totalDisposedPct+"%",r.totalPending];return <React.Fragment key={r.officer}><tr>{vals.map((v,j)=>{if(j===11||j===19)return <td key={j} className="sep"/>;const pctValue=j===8?r.nmPct:j===16?r.dPct:j===21?r.totalDisposedPct:null;const k=j===7?groups.nm.get(r.officer):j===15?groups.disc.get(r.officer):"";const cls=[j===1?"name":"",j===4||j===12?"earlier":"",k?"colour "+k:""].join(" ");const pctStyle=pctValue===null?{}:{background:rgbCss(percentageColor(pctValue)),color:percentageTextColor(pctValue),fontWeight:850};return <td key={j} className={cls} style={pctStyle}>{v}</td>})}</tr><tr className="psDetailRow"><td colSpan={23}><div className="psTitle">PS-WISE DETAILS — {formatOfficer(r)}</div><div className="psTableWrap"><table className="psTable"><thead><tr>{["S.No.","PS No.","BLO NAME","BLO SUPERVISOR","TOTAL NOTICES","TOTAL NO MAPPING","NM DISP. EARLIER","NM DISP. LATEST","NM DIFF.","NM DOCS UPLOADED","TOTAL DISCREPANCY","DISC. DISP. EARLIER","DISC. DISP. LATEST","DISC. DIFF.","BLO LETTER UPLOADED","TOTAL NOTICES DISPOSED","% TOTAL DISPOSED"].map(h=><th key={h}>{h}</th>)}</tr></thead><tbody>{buildOfficerPSRows(r.officer).map((p:any)=><tr key={String(p[1])}>{p.map((v:any,j:number)=>{const pct=j===16?Number(String(v).replace("%","")):null;return <td key={j} style={pct===null?{}:{background:rgbCss(percentageColor(pct)),color:percentageTextColor(pct),fontWeight:850}}>{v}</td>})}</tr>)}</tbody></table></div></td></tr></React.Fragment>})}
     <tr className="grand"><td></td><td>GRAND TOTAL - AC-34 MATIALA</td><td>{psCount}</td><td>{formatNumber(total.totalNotices)}</td><td>{formatNumber(total.nmTotal)}</td><td>{formatNumber(total.nmEarlier)}</td><td>{formatNumber(total.nmLatest)}</td><td>{formatNumber(total.nmDifference)}</td><td>{total.nmPct}%</td><td>{formatNumber(total.nmDocs)}</td><td>{formatNumber(total.nmPending)}</td><td className="sep"></td><td>{formatNumber(total.dTotal)}</td><td>{formatNumber(total.dEarlier)}</td><td>{formatNumber(total.dLatest)}</td><td>{formatNumber(total.dDifference)}</td><td>{total.dPct}%</td><td>{formatNumber(total.dLetters)}</td><td>{formatNumber(total.dPending)}</td><td className="sep"></td><td>{formatNumber(total.totalDisposed)}</td><td>{total.totalDisposedPct}%</td><td>{formatNumber(total.totalPending)}</td></tr>
    </tbody></table></div>
    <div className="legend"><b>COLOUR CODE:</b><span className="low">LOW (needs attention)</span><span className="medium">MEDIUM</span><span className="high">HIGH (good)</span></div>
