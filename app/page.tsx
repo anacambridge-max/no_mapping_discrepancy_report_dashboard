@@ -36,8 +36,8 @@ const percentageColor=(value:number):[number,number,number]=>{
   if(value<40)return [245,124,0];       // #F57C00 dark orange
   if(value<60)return [255,183,77];      // #FFB74D light orange
   if(value<70)return [255,213,79];      // #FFD54F yellow
-  if(value<80)return [197,232,108];     // #C5E86C greenish yellow
-  if(value<90)return [129,199,132];     // #81C784 light green
+  if(value<80)return [212,232,92];      // #D4E85C greenish yellow
+  if(value<90)return [168,216,109];     // #A8D86D yellowish light green
   return [46,173,98];                   // #2EAD62 green
 };
 const percentageTextColor=(value:number)=>value<20||value>=90?"#FFFFFF":"#111111";
@@ -45,14 +45,9 @@ const percentageTextColor=(value:number)=>value<20||value>=90?"#FFFFFF":"#111111
 const getPercentageStyle=(input:any)=>{
   const value=Number.parseFloat(String(input??"").replace("%","").trim());
   if(!Number.isFinite(value))return {backgroundColor:"#FFFFFF",color:"#000000"};
-  if(value<20)return {backgroundColor:"#D32F2F",color:"#FFFFFF"};
-  if(value<30)return {backgroundColor:"#FF6B6B",color:"#000000"};
-  if(value<40)return {backgroundColor:"#F57C00",color:"#000000"};
-  if(value<60)return {backgroundColor:"#FFB74D",color:"#000000"};
-  if(value<70)return {backgroundColor:"#FFD54F",color:"#000000"};
-  if(value<80)return {backgroundColor:"#C5E86C",color:"#000000"};
-  if(value<90)return {backgroundColor:"#81C784",color:"#000000"};
-  return {backgroundColor:"#2EAD62",color:"#FFFFFF"};
+  const rgb=percentageColor(value);
+  const backgroundColor="#"+rgb.map(v=>v.toString(16).padStart(2,"0")).join("").toUpperCase();
+  return {backgroundColor,color:percentageTextColor(value)};
 };
 const hexRgb=(hex:string):[number,number,number]=>{
   const h=hex.replace("#","");
