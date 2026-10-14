@@ -220,11 +220,6 @@ export default function Page(){
     {content:"TOTAL DISPOSAL",colSpan:2}
   ];
   const allPS=pdfRows.flatMap(r=>buildOfficerPSRows(r.officer));
-  const psGroups={
-    nm:allPS.map(p=>percentageColor(parseFloat(String(p[8]))||0)),
-    disc:allPS.map(p=>percentageColor(parseFloat(String(p[14]))||0)),
-    total:allPS.map(p=>percentageColor(parseFloat(String(p[18]))||0))
-  };
   pdfRows.forEach((officerRow,oi)=>{
     const psRows=buildOfficerPSRows(officerRow.officer);
     // Each officer starts a distinct section. If a long table continues, the officer heading repeats.
