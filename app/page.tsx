@@ -44,6 +44,15 @@ const color=(v:any):[number,number,number]=>{
   if(Array.isArray(v))return v as [number,number,number];
   return [255,235,132];
 };
+const rgbCss=(rgb:[number,number,number])=>"rgb("+rgb.join(",")+")";
+// Fixed numeric thresholds: 0–25 red, 25–50 orange, 50–75 yellow, 75–90 light green, 90–100 green.
+const percentageColor=(value:number):[number,number,number]=>{
+  if(value<25)return [248,180,180];
+  if(value<50)return [255,190,120];
+  if(value<75)return [255,230,153];
+  if(value<90)return [198,224,180];
+  return [183,225,161];
+};
 
 export default function Page(){
  const [earlier,setEarlier]=useState<ParsedReport|null>(null);
@@ -121,7 +130,7 @@ export default function Page(){
   const fixedPctGroup=(rows:any[],get:(r:any)=>number)=>{
     const out=new Map<string,[number,number,number]>();
     const params=excelScaleParams(rows.map(get));
-    rows.forEach(r=>out.set(r.officer,excelScaleColor(get(r),params.min,params.mid,params.max)));
+    rows.forEach(r=>out.set(r.officer,percentageColor(get(r))));
     return out;
   };
   const pdfPctGroups={
@@ -202,7 +211,7 @@ export default function Page(){
   const psDiscParams=excelScaleParams(allPS.map(p=>parseFloat(String(p[14]))||0));
   const psTotalParams=excelScaleParams(allPS.map(p=>parseFloat(String(p[18]))||0));
   const psBand=(value:number,params:{min:number,mid:number,max:number})=>
-    excelScaleColor(value,params.min,params.mid,params.max);
+    percentageColor(value);
   pdfRows.forEach((officerRow,oi)=>{
     const psRows=buildOfficerPSRows(officerRow.officer);
     // Each officer starts a distinct section. If a long table continues, the officer heading repeats.
@@ -319,7 +328,7 @@ export default function Page(){
       "dTotal","dEarlier","dLatest","dDifference","dPct","dLetters","dPending","x","totalDisposed","totalDisposedPct","totalPending"
     ][i]||"nmDifference") as keyof OfficerReportRow)}>{c}<ArrowUpDown size={10}/></th>)}</tr>
    </thead><tbody>
-    {rows.map((r,i)=>{const vals=[i+1,formatOfficer(r),r.psCount,r.totalNotices,r.nmTotal,r.nmEarlier,r.nmLatest,r.nmDifference,r.nmPct+"%",r.nmDocs,r.nmPending,"",r.dTotal,r.dEarlier,r.dLatest,r.dDifference,r.dPct+"%",r.dLetters,r.dPending,"",r.totalDisposed,r.totalDisposedPct+"%",r.totalPending];return <React.Fragment key={r.officer}><tr>{vals.map((v,j)=>{if(j===11||j===19)return <td key={j} className="sep"/>;const k=j===7||j===8?groups.nm.get(r.officer):j===15||j===16?groups.disc.get(r.officer):j===21?groups.totalDisposed.get(r.officer):"";const cls=[j===1?"name":"",j===4||j===12?"earlier":"",k?"colour "+k:""].join(" ");return <td key={j} className={cls}>{v}</td>})}</tr><tr className="psDetailRow"><td colSpan={23}><div className="psTitle">PS-WISE DETAILS — {formatOfficer(r)}</div><div className="psTableWrap"><table className="psTable"><thead><tr>{["S.No.","PS No.","BLO NAME","BLO SUPERVISOR","TOTAL NOTICES","TOTAL NO MAPPING","NM DISP. EARLIER","NM DISP. LATEST","NM DIFF.","NM DOCS UPLOADED","TOTAL DISCREPANCY","DISC. DISP. EARLIER","DISC. DISP. LATEST","DISC. DIFF.","BLO LETTER UPLOADED","TOTAL NOTICES DISPOSED","% TOTAL DISPOSED"].map(h=><th key={h}>{h}</th>)}</tr></thead><tbody>{buildOfficerPSRows(r.officer).map((p:any)=><tr key={String(p[1])}>{p.map((v:any,j:number)=><td key={j}>{v}</td>)}</tr>)}</tbody></table></div></td></tr></React.Fragment>})}
+    {rows.map((r,i)=>{const vals=[i+1,formatOfficer(r),r.psCount,r.totalNotices,r.nmTotal,r.nmEarlier,r.nmLatest,r.nmDifference,r.nmPct+"%",r.nmDocs,r.nmPending,"",r.dTotal,r.dEarlier,r.dLatest,r.dDifference,r.dPct+"%",r.dLetters,r.dPending,"",r.totalDisposed,r.totalDisposedPct+"%",r.totalPending];return <React.Fragment key={r.officer}><tr>{vals.map((v,j)=>{if(j===11||j===19)return <td key={j} className="sep"/>;const k=j===7||j===8?groups.nm.get(r.officer):j===15||j===16?groups.disc.get(r.officer):j===21?groups.totalDisposed.get(r.officer):"";const pctValue=j===8?r.nmPct:j===16?r.dPct:j===21?r.totalDisposedPct:null;const pctStyle=pctValue===null?{}:{background:rgbCss(percentageColor(pctValue)),color:"#222",fontWeight:850};const cls=[j===1?"name":"",j===4||j===12?"earlier":"",k&&pctValue===null?"colour "+k:""].join(" ");return <td key={j} className={cls} style={pctStyle}>{v}</td>})}</tr><tr className="psDetailRow"><td colSpan={23}><div className="psTitle">PS-WISE DETAILS — {formatOfficer(r)}</div><div className="psTableWrap"><table className="psTable"><thead><tr>{["S.No.","PS No.","BLO NAME","BLO SUPERVISOR","TOTAL NOTICES","TOTAL NO MAPPING","NM DISP. EARLIER","NM DISP. LATEST","NM DIFF.","NM DOCS UPLOADED","TOTAL DISCREPANCY","DISC. DISP. EARLIER","DISC. DISP. LATEST","DISC. DIFF.","BLO LETTER UPLOADED","TOTAL NOTICES DISPOSED","% TOTAL DISPOSED"].map(h=><th key={h}>{h}</th>)}</tr></thead><tbody>{buildOfficerPSRows(r.officer).map((p:any)=><tr key={String(p[1])}>{p.map((v:any,j:number)=><td key={j}>{v}</td>)}</tr>)}</tbody></table></div></td></tr></React.Fragment>})}
     <tr className="grand"><td></td><td>GRAND TOTAL - AC-34 MATIALA</td><td>{psCount}</td><td>{formatNumber(total.totalNotices)}</td><td>{formatNumber(total.nmTotal)}</td><td>{formatNumber(total.nmEarlier)}</td><td>{formatNumber(total.nmLatest)}</td><td>{formatNumber(total.nmDifference)}</td><td>{total.nmPct}%</td><td>{formatNumber(total.nmDocs)}</td><td>{formatNumber(total.nmPending)}</td><td className="sep"></td><td>{formatNumber(total.dTotal)}</td><td>{formatNumber(total.dEarlier)}</td><td>{formatNumber(total.dLatest)}</td><td>{formatNumber(total.dDifference)}</td><td>{total.dPct}%</td><td>{formatNumber(total.dLetters)}</td><td>{formatNumber(total.dPending)}</td><td className="sep"></td><td>{formatNumber(total.totalDisposed)}</td><td>{total.totalDisposedPct}%</td><td>{formatNumber(total.totalPending)}</td></tr>
    </tbody></table></div>
    <div className="legend"><b>COLOUR CODE:</b><span className="low">LOW (needs attention)</span><span className="medium">MEDIUM</span><span className="high">HIGH (good)</span></div>
