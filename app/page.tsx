@@ -150,7 +150,10 @@ export default function Page(){
    "NM DOCS UPLOADED":[nmDocs,summary?.nmDocs||0],"TOTAL DISCREPANCY":[dTotal,summary?.dTotal||0],
    "DISC. DISP. LATEST":[dLatest,summary?.dLatest||0],"DISC. DIFF.":[dDifference,summary?.dDifference||0],
    "PENDING DISCREPANCY CASES":[dPending,summary?.dPending||0],"BLO LETTER UPLOADED":[dLetters,summary?.dLetters||0],
-   "TOTAL NOTICES DISPOSED":[totalDisposed,summary?.totalDisposed||0],"TOTAL NOTICES PENDING":[totalPending,summary?.totalPending||0]
+   "TOTAL NOTICES DISPOSED":[totalDisposed,summary?.totalDisposed||0],"TOTAL NOTICES PENDING":[totalPending,summary?.totalPending||0],
+   "NM DISPOSED PERCENT":[percentage(nmLatest,nmTotal),summary?.nmPct||0],
+   "DISC. DISPOSED PERCENT":[percentage(dLatest,dTotal),summary?.dPct||0],
+   "TOTAL DISPOSED PERCENT":[percentage(totalDisposed,totalNotices),summary?.totalDisposedPct||0]
   };
   const mismatches=Object.entries(checks).filter(([,v])=>v[0]!==v[1]);
   return {psCount,totalNotices,nmTotal,nmLatest,nmDifference,nmPending,nmDocs,nmEarlier,dTotal,dLatest,dDifference,dPending,dLetters,dEarlier,totalDisposed,totalPending,nmPct,dPct,totalPct,mismatches,
