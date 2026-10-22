@@ -258,7 +258,7 @@ export default function Page(){
     const psRows=buildOfficerPSRows(officerRow.officer);
     // Each officer starts a distinct section. If a long table continues, the officer heading repeats.
     if(oi>0) doc.addPage();
-    const officerTitle=(oi+1)+". "+officerRow.officer+" ("+(officerRow.designation||"Officer")+") — "+officerRow.psCount+" PS";
+    const officerTitle=(oi+1)+". "+officerRow.officer+" ("+(officerRow.designation||"Officer")+") — "+psRows.length+" PENDING PS";
     detailPageHeader(officerTitle);
     detailY=18;
     autoTable(doc,{
