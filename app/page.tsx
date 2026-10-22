@@ -122,7 +122,13 @@ export default function Page(){
  const buildOfficerPSRows=(officer:string)=>{
   const L=(latest?.rows||[]).filter(r=>r.officer===officer && String(r.psNo??"").trim()!=="").sort((a,b)=>String(a.psNo).localeCompare(String(b.psNo),undefined,{numeric:true}));
   const E=new Map((earlier?.rows||[]).filter(r=>r.officer===officer).map(r=>[r.psNo,r]));
-  return L.map((r,i)=>{
+  return L.filter(r=>{
+   // Include a PS if either notice category still has pending cases.
+   // Fully disposed PS (100% in both categories) are excluded from the detail report.
+   const nmPending=r.nmTotal-r.nmDisposed;
+   const dPending=r.dTotal-r.dDisposed;
+   return nmPending>0||dPending>0;
+  }).map((r,i)=>{
    const e=E.get(r.psNo);
    const totalDisposed=r.nmDisposed+r.dDisposed;
    const nmPending=r.nmTotal-r.nmDisposed;
